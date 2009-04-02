@@ -208,21 +208,16 @@ render_background (GtkGlImage *self)
 
 	GLfloat w = 4.0f * ratio;
 	GLfloat h = 4.0f;
-	GLfloat h0 = h;
 
 //	glEnable (GL_DITHER);
 	glBindTexture (GL_TEXTURE_2D, 0);
 	glBegin (GL_QUADS);
-//		glColor3f (1.0f, 0.0f, 0.0f);
 		glColor3f (0.0f, 0.0f, 0.0f);
 		glVertex3f (-w, 0.0f, -4.0f);
-//		glColor3f (1.0f, 1.0f, 0.0f);
 		glVertex3f ( w, 0.0f, -4.0f);
-//		glColor3f (0.3f, 1.0f, 0.0f);
 		glColor3f (0.20f, 0.20f, 0.20f);
-		glVertex3f ( w, -4.0f, -4.0f);
-//		glColor3f (1.0f, 0.0f, 1.0f);
-		glVertex3f (-w, -4.0f, -4.0f);
+		glVertex3f ( w, -h, -4.0f);
+		glVertex3f (-w, -h, -4.0f);
 	glEnd ();
 //	glDisable (GL_DITHER);
 
@@ -387,6 +382,7 @@ gfloat
 gtk_gl_image_get_zoom (GtkGlImage *self)
 {
 	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	return 1.0;
 }
 
 
@@ -420,6 +416,7 @@ gint
 gtk_gl_image_get_rotation (GtkGlImage *self)
 {
 	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	return 0;
 }
 
 
@@ -562,7 +559,7 @@ expose_event (GtkWidget      *widget,
 
 	if (! gdk_gl_drawable_gl_begin (gldrawable, glcontext)) {
 		g_printerr ("gdk_gl_drawable_gl_begin failed\n");
-		return;
+		return FALSE;
 	}
 
 	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
@@ -580,6 +577,7 @@ expose_event (GtkWidget      *widget,
 
 
 	gdk_gl_drawable_gl_end (gldrawable);
+	return TRUE;
 }
 
 

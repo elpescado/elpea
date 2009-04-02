@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include <gtk/gtk.h>
+#include <gtk/gtkgl.h>
 
 #include "gtk-gl-image.h"
 
@@ -23,6 +24,7 @@ gboolean            scroll_cb                          (GtkWidget      *widget,
 	} else if (event->direction == GDK_SCROLL_DOWN) {
 		gtk_gl_image_zoom_out (img);
 	}
+	return TRUE;
 }
 
 int main (int argc, char *argv[])

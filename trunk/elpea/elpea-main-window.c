@@ -24,6 +24,7 @@
 
 #include <gtk-gl-image.h>
 
+#include "elpea-directory.h"
 #include "elpea-main-window.h"
 #include "elpea-thumbnail-view.h"
 
@@ -77,7 +78,7 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 
 	/* Main menu placeholder */
 	GtkWidget *menubar = gtk_menu_new ();
-	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, FALSE, 0);
+//	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, FALSE, 0);	// FIXME: Warning here
 	gtk_widget_show (menubar);
 
 	/* Toolbar placeholder */
@@ -108,7 +109,7 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 
 	/* Image preview */
 	GtkWidget *img = gtk_gl_image_new ();
-	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), "../gtkglimage/lighthouse.jpg");
+	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), "../data/elpea-logo.png");
 	gtk_widget_add_events (img, GDK_BUTTON_PRESS_MASK);
 	gtk_paned_add2 (GTK_PANED (paned), img);
 	gtk_widget_show (img);
@@ -166,7 +167,11 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	g_signal_connect (G_OBJECT (priv->zoom_adjustment), "value-changed",
 	                  G_CALLBACK (zoom_adjustment_value_changed), self);
 
-	priv->thumbnail_model = create_tree_model ();
+//	priv->thumbnail_model = create_tree_model ();
+	ElpeaDirectory *dir = elpea_directory_new ();
+	g_print ("dir=%p (%d)\n", dir, ELPEA_IS_DIRECTORY (dir));
+	elpea_directory_load (dir, ".");
+	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
 }
