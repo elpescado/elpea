@@ -4,14 +4,14 @@
 
 #include <gtk/gtk.h>
 
-
+/*
 size_t get_file_size (const char *path)
 {
 	struct stat s = {0};
 	stat (path, &s);
 	return s.st_size;
 }
-
+*/
 
 
 void

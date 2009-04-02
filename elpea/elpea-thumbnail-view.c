@@ -20,9 +20,22 @@
 
 #include <gtk/gtk.h>
 #include "elpea-thumbnail-view.h"
+#include "elpea-thumbnail.h"
 
 
 G_DEFINE_TYPE (ElpeaThumbnailView, elpea_thumbnail_view, GTK_TYPE_TREE_VIEW)
+
+
+
+static void
+cell_data_func                                          (GtkTreeViewColumn *tree_column,
+                                                         GtkCellRenderer *cell,
+                                                         GtkTreeModel *tree_model,
+                                                         GtkTreeIter *iter,
+                                                         gpointer data);
+
+
+
 
 struct _ElpeaThumbnailViewPrivate
 {
@@ -58,16 +71,40 @@ elpea_thumbnail_view_init_gui (ElpeaThumbnailView *self)
 	/* Create renderers */
 	GtkCellRenderer *pix = gtk_cell_renderer_pixbuf_new ();
 	gtk_tree_view_column_pack_start (column, pix, FALSE);
-	gtk_tree_view_column_add_attribute (column, pix, "pixbuf", 0);
+	gtk_tree_view_column_add_attribute (column, pix, "pixbuf", 1);
 
 
 	GtkCellRenderer *txt = gtk_cell_renderer_text_new ();
 	gtk_tree_view_column_pack_start (column, txt, TRUE);
-	gtk_tree_view_column_add_attribute (column, txt, "markup", 1);
+	gtk_tree_view_column_set_cell_data_func (column, txt, cell_data_func, self, NULL);
+//	gtk_tree_view_column_add_attribute (column, txt, "markup", 1);
 
 	/* Misc */
 	gtk_tree_view_append_column (GTK_TREE_VIEW (self), column);
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW (self), FALSE);
+}
+
+
+static void
+cell_data_func                                          (GtkTreeViewColumn *tree_column,
+                                                         GtkCellRenderer *cell,
+                                                         GtkTreeModel *tree_model,
+                                                         GtkTreeIter *iter,
+                                                         gpointer data)
+{
+	ElpeaThumbnail *thumb;
+	gtk_tree_model_get (tree_model, iter, 0, &thumb, -1);
+
+	const gchar *file = elpea_thumbnail_get_name (thumb);
+	gint size = elpea_thumbnail_get_size (thumb);
+	gint width = elpea_thumbnail_get_width (thumb);
+	gint height = elpea_thumbnail_get_height (thumb);
+
+	gchar *txt = g_strdup_printf ("<b>%s</b>\n<small>%dx%d pixels\n%d bytes</small>", file, width, height, size);
+	g_object_set (G_OBJECT (cell), "markup", txt, NULL);
+	g_free (txt);
+
+	g_object_unref (thumb);
 }
 
 
