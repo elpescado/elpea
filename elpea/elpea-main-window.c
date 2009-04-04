@@ -28,6 +28,8 @@
 #include "elpea-main-window.h"
 #include "elpea-thumbnail-view.h"
 
+#define N_(a) (a)
+
 static void
 zoom_adjustment_value_changed (GtkAdjustment *adjustment,
                                ElpeaMainWindow *self);
@@ -41,6 +43,8 @@ struct _ElpeaMainWindowPrivate
 	GtkAdjustment *zoom_adjustment;
 
 	/* Widgets */
+	GtkActionGroup *action_group;
+	GtkUIManager *ui;
 	GtkGlImage *image;
 
 	GtkTreeModel *thumbnail_model;
@@ -61,12 +65,143 @@ elpea_main_window_new (void)
 	return GTK_WIDGET (self);
 }
 
+void
+dummy_callback (void)
+{
+	g_print (" *** dummy callback called ***\n");
+}
+
+
+/* UI actions */
+
+static GtkAction *
+_get_action (ElpeaMainWindow *self, const gchar *name)
+{
+	ElpeaMainWindowPrivate *priv = self->priv;
+	return gtk_action_group_get_action (priv->action_group, name);
+}
+
+
+static const GtkActionEntry actions[] = {
+	{"File", NULL, N_("File")},
+		{"Open", GTK_STOCK_OPEN, NULL, "<Ctrl>o", N_("Open image"), G_CALLBACK (dummy_callback)},
+		{"Quit", GTK_STOCK_QUIT, NULL, "<Ctrl>q", N_("Quit"), G_CALLBACK (gtk_main_quit)},
+	{"Edit", NULL, N_("Edit")},
+		{"Preferences", GTK_STOCK_PREFERENCES, NULL, "<Ctrl><Alt>p", N_("Preferences"), G_CALLBACK (dummy_callback)},
+	{"View", NULL, N_("View")},
+		{"ZoomIn",     GTK_STOCK_ZOOM_IN, NULL, "plus", N_("Zoom image in"), G_CALLBACK (dummy_callback)},
+		{"ZoomOut",    GTK_STOCK_ZOOM_OUT, NULL, "minus", N_("Zoom image out"), G_CALLBACK (dummy_callback)},
+		{"Zoom1",      GTK_STOCK_ZOOM_100, NULL, "1", N_("Normal zoom"), G_CALLBACK (dummy_callback)},
+		{"ZoomFit",    GTK_STOCK_ZOOM_FIT, NULL, "f", N_("Fit to window"), G_CALLBACK (dummy_callback)},
+		{"RotateLeft", "object-rotate-left", "Rotate Left", "l", N_("Rotate image counter-clockwise"), G_CALLBACK (dummy_callback)},
+		{"RotateRight","object-rotate-right", "Rotate Right", "r", N_("Rotate image clockwise"), G_CALLBACK (dummy_callback)},
+	{"Go", NULL, N_("Go")},
+		{"Prev",    GTK_STOCK_GO_BACK, NULL, "<Alt>Left", N_("Previous image"), G_CALLBACK (dummy_callback)},
+		{"Next",    GTK_STOCK_GO_FORWARD, NULL, "<Alt>Right", N_("Next image"), G_CALLBACK (dummy_callback)},
+	{"Help", NULL, N_("Help")},
+		{"About",   GTK_STOCK_ABOUT, NULL, NULL, N_("About elpea"), G_CALLBACK (dummy_callback)}
+
+};
+
+static const guint n_actions = G_N_ELEMENTS (actions);
+
+
+static const GtkToggleActionEntry toggle_actions [] = {
+	{"ShowMenubar", NULL, N_("Show Menubar"), "m", N_("Whether to show menubar"), G_CALLBACK (dummy_callback), TRUE},
+	{"ShowToolbar", NULL, N_("Show Toolbar"), "", N_("Whether to show toolbar"), G_CALLBACK (dummy_callback), TRUE},
+	{"ShowSidebar", NULL, N_("Show Sidebar"), "", N_("Whether to show sidebar"), G_CALLBACK (dummy_callback), TRUE},
+	{"ShowStatusbar", NULL, N_("Show Statusbar"), "", N_("Whether to show statusbar"), G_CALLBACK (dummy_callback), TRUE},
+};
+
+static const guint n_toggle_actions = G_N_ELEMENTS (toggle_actions);
+
+
+
+static const gchar* ui_markup =
+"<ui>"
+	"<menubar>"
+		"<menu action='File'>"
+			"<menuitem action='Open' />"
+			"<separator/>"
+			"<menuitem action='Quit' />"
+		"</menu>"
+		"<menu action='Edit'>"
+			"<menuitem action='Preferences' />"
+		"</menu>"
+		"<menu action='View'>"
+			"<menuitem action='ShowMenubar' />"
+			"<menuitem action='ShowToolbar' />"
+			"<menuitem action='ShowSidebar' />"
+			"<menuitem action='ShowStatusbar' />"
+			"<separator/>"
+			"<menuitem action='ZoomIn' />"
+			"<menuitem action='ZoomOut' />"
+			"<menuitem action='Zoom1' />"
+			"<menuitem action='ZoomFit' />"
+			"<separator/>"
+			"<menuitem action='RotateLeft' />"
+			"<menuitem action='RotateRight' />"
+		"</menu>"
+		"<menu action='Go'>"
+			"<menuitem action='Prev' />"
+			"<menuitem action='Next' />"
+		"</menu>"
+		"<menu action='Help'>"
+			"<menuitem action='About' />"
+		"</menu>"
+	"</menubar>"
+	"<toolbar>"
+		"<toolitem action='Open' />"
+		"<separator/>"
+		"<toolitem action='Prev' />"
+		"<toolitem action='Next' />"
+		"<separator/>"
+		"<toolitem action='ZoomIn' />"
+		"<toolitem action='ZoomOut' />"
+		"<toolitem action='Zoom1' />"
+		"<toolitem action='ZoomFit' />"
+		"<separator/>"
+		"<toolitem action='RotateLeft' />"
+		"<toolitem action='RotateRight' />"
+	"</toolbar>"
+"</ui>";
+
+
+static void
+elpea_main_window_init_actions (ElpeaMainWindow *self)
+{
+	ElpeaMainWindowPrivate *priv = self->priv;
+	GError *error = NULL;
+
+	priv->action_group = gtk_action_group_new ("elpea");
+	//gtk_action_group_set_translation_domain (browser->action_group, GETTEXT_PACKAGE);
+	gtk_action_group_add_actions (priv->action_group, actions, n_actions, self);
+	gtk_action_group_add_toggle_actions (priv->action_group, toggle_actions, n_toggle_actions, self);
+
+	/* Setup some actions */
+#if GTK_CHECK_VERSION (2, 16, 0)
+	gtk_action_set_is_important (_get_action (self, "Prev"), TRUE);
+	gtk_action_set_is_important (_get_action (self, "Next"), TRUE);
+#endif
+
+	priv->ui = gtk_ui_manager_new ();
+	gtk_ui_manager_insert_action_group (priv->ui, priv->action_group, 0);
+	gtk_window_add_accel_group (GTK_WINDOW (self), gtk_ui_manager_get_accel_group (priv->ui));
+
+	if (! gtk_ui_manager_add_ui_from_string (priv->ui, ui_markup, -1, &error)) {
+		g_printerr (" *** ERROR??? %s\n", error->message);
+		g_error_free (error);
+	}
+
+}
+
 
 static void
 elpea_main_window_init_gui (ElpeaMainWindow *self)
 {
 	ElpeaMainWindowPrivate *priv = self->priv;
 
+	elpea_main_window_init_actions (self);
 	gtk_window_set_title (GTK_WINDOW (self), "elpea Photo Album");
 	gtk_window_set_default_size (GTK_WINDOW (self), 640, 480);
 
@@ -77,12 +212,15 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_widget_show (vbox);
 
 	/* Main menu placeholder */
-	GtkWidget *menubar = gtk_menu_new ();
-//	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, FALSE, 0);	// FIXME: Warning here
+//	GtkWidget *menubar = gtk_menu_new ();
+	GtkWidget *menubar = gtk_ui_manager_get_widget (priv->ui, "/menubar");
+	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, FALSE, 0);	// FIXME: Warning here
 	gtk_widget_show (menubar);
 
 	/* Toolbar placeholder */
-	GtkWidget *toolbar = gtk_toolbar_new ();
+//	GtkWidget *toolbar = gtk_toolbar_new ();
+	GtkWidget *toolbar = gtk_ui_manager_get_widget (priv->ui, "/toolbar");
+	g_print ("toolbar=%p\n", toolbar);
 	gtk_box_pack_start (GTK_BOX (vbox), toolbar, FALSE, FALSE, 0);
 	gtk_widget_show (toolbar);
 
@@ -170,7 +308,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 //	priv->thumbnail_model = create_tree_model ();
 	ElpeaDirectory *dir = elpea_directory_new ();
 	g_print ("dir=%p (%d)\n", dir, ELPEA_IS_DIRECTORY (dir));
-	elpea_directory_load (dir, ".");
+	elpea_directory_load (dir, "..");
 	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
