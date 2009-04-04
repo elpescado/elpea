@@ -106,7 +106,7 @@ gtk_gl_image_init (GtkGlImage *self)
 static void
 init_gl (GtkGlImage *self)
 {
-	g_print ("init_gl\n");
+	//g_print ("init_gl\n");
 	GtkWidget *widget = GTK_WIDGET (self);
 
 	GLfloat w = widget->allocation.width;
@@ -125,7 +125,7 @@ init_gl (GtkGlImage *self)
 	glEnable (GL_TEXTURE_2D);
 	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
 
-	g_print ("sizeof(GLuint)=%d sizeof(guint)=%d\n", sizeof(GLuint), sizeof(guint));
+	//g_print ("sizeof(GLuint)=%d sizeof(guint)=%d\n", sizeof(GLuint), sizeof(guint));
 }
 
 
@@ -133,13 +133,13 @@ static guint
 gtk_gl_load_texture (GdkPixbuf *pix)
 {
 //	g_return_val_if_null (pix, 0);
-	g_print ("gtk_gl_load_texture (pix=%p)\n", pix);
+	//g_print ("gtk_gl_load_texture (pix=%p)\n", pix);
 
 	int bpp = gdk_pixbuf_get_n_channels (pix);	// bytes per pixel
 	int w = gdk_pixbuf_get_width (pix);
 	int h = gdk_pixbuf_get_height (pix);
 
-	g_print ("   bpp=%d w=%d h=%d\n", bpp, w, h);
+	//g_print ("   bpp=%d w=%d h=%d\n", bpp, w, h);
 
 	GLenum texture_format;
 
@@ -166,7 +166,7 @@ gtk_gl_load_texture (GdkPixbuf *pix)
 				  texture_format, GL_UNSIGNED_BYTE,
 				  gdk_pixbuf_get_pixels (pix));
 
-	g_print ("   tex=%u\n", (unsigned int)tex);
+	//g_print ("   tex=%u\n", (unsigned int)tex);
 	return (guint) tex;
 }
 
@@ -182,7 +182,7 @@ gtk_gl_load_texture_from_file (const gchar *file)
 static void
 redraw (GtkGlImage *self)
 {
-	g_print ("redraw\n");
+	//g_print ("redraw\n");
 
 	if (! GTK_WIDGET_REALIZED (self))
 		return;
@@ -198,13 +198,13 @@ redraw (GtkGlImage *self)
 static void
 render_background (GtkGlImage *self)
 {
-	g_print ("render_background\n");
+	//g_print ("render_background\n");
 	glDisable (GL_DEPTH_TEST);
 
 	GtkWidget *widget = GTK_WIDGET (self);
 	GLfloat ratio = (GLfloat)widget->allocation.width / (GLfloat)widget->allocation.height;
 
-	g_print ("ratio = %f\n", ratio);
+	//g_print ("ratio = %f\n", ratio);
 
 	GLfloat w = 4.0f * ratio;
 	GLfloat h = 4.0f;
@@ -228,7 +228,7 @@ render_background (GtkGlImage *self)
 static void
 render (GtkGlImage *self)
 {
-	g_print ("render\n");
+	//g_print ("render\n");
 	GtkGlImagePrivate *priv = self->priv;
 	GtkWidget *widget = GTK_WIDGET (self);
 
@@ -251,7 +251,7 @@ render (GtkGlImage *self)
 
 	GLfloat scale = img_h * 8.0 / win_h;
 
-	g_print ("img_h = %lf win_h = %lf\n", img_h, win_h);
+	//g_print ("img_h = %lf win_h = %lf\n", img_h, win_h);
 
 	GLfloat hscale = scale * priv->ratio;
 	glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
@@ -260,7 +260,7 @@ render (GtkGlImage *self)
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	g_print ("Binding texture %u\n", priv->tex_id);
+	//g_print ("Binding texture %u\n", priv->tex_id);
 	glBindTexture (GL_TEXTURE_2D, priv->tex_id);
 	
 	glBegin (GL_QUADS);
@@ -301,7 +301,7 @@ void
 gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
                               GdkPixbuf  *pixbuf)
 {
-	g_print ("gtk_gl_image_set_from_pixbuf\n");
+	//g_print ("gtk_gl_image_set_from_pixbuf\n");
 	GtkGlImagePrivate *priv = self->priv;
 
 	priv->pixbuf = g_object_ref (pixbuf);
@@ -312,9 +312,9 @@ gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
 	gdouble h = gdk_pixbuf_get_height (pixbuf);
 	priv->ratio = w/h;
 
-	g_print (" -> pix = %p\n", priv->pixbuf);
-	g_print (" -> tex = %u\n", priv->tex_id);
-	g_print (" -> ratio = %lf\n", priv->ratio);
+	//g_print (" -> pix = %p\n", priv->pixbuf);
+	//g_print (" -> tex = %u\n", priv->tex_id);
+	//g_print (" -> ratio = %lf\n", priv->ratio);
 
 	redraw (self);
 }
@@ -324,7 +324,7 @@ void
 gtk_gl_image_set_from_file (GtkGlImage *self,
                             const gchar *file)
 {
-	g_print ("gtk_gl_image_set_from_file ('%s')\n", file);
+	//g_print ("gtk_gl_image_set_from_file ('%s')\n", file);
 	GdkPixbuf *pix = gdk_pixbuf_new_from_file (file, NULL);
 	gtk_gl_image_set_from_pixbuf (self, pix);
 	g_object_unref (G_OBJECT (pix));
@@ -483,7 +483,7 @@ gtk_gl_image_dispose (GObject *object)
 static void
 realize (GtkWidget *widget)
 {
-	g_print ("realize\n");
+	//g_print ("realize\n");
 
 	/* First call super method */
 	GtkGlImageClass *klass = GTK_GL_IMAGE_GET_CLASS (widget);
@@ -513,7 +513,7 @@ static gboolean
 configure_event (GtkWidget         *widget,
                  GdkEventConfigure *event)
 {
-	g_print ("configure_event\n");
+	//g_print ("configure_event\n");
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (widget);
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (widget);
 
@@ -552,7 +552,7 @@ static gboolean
 expose_event (GtkWidget      *widget,
               GdkEventExpose *event)
 {
-	g_print ("expose_event\n");
+	//g_print ("expose_event\n");
 
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (widget);
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (widget);
