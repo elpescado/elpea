@@ -1,0 +1,24 @@
+version 1.0
+
+ * GtkGlImage
+   - Image rotation
+   - Image panning
+
+ * elpea
+   - Menubar and toolbar
+   - Loading thumbnails in background
+   - Preferences
+   - Fullscreen mode
+
+ * misc
+   - DOCUMENTATION!!!
+
+version 2.0
+
+ * GtkGlImage
+   - animations
+
+undecided
+
+ * elpea
+   - image details pane
