@@ -29,6 +29,7 @@
 #include "elpea-thumbnail-view.h"
 
 #define N_(a) (a)
+#define _(a) (a)
 
 static void
 zoom_adjustment_value_changed (GtkAdjustment *adjustment,
@@ -72,6 +73,48 @@ dummy_callback (void)
 }
 
 
+static void
+_action_about (GtkAction *action,
+               gpointer   user_data)
+{
+	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
+
+	GdkPixbuf *logo = gdk_pixbuf_new_from_file ("../data/elpea-logo.png", NULL);
+
+	GtkWidget *win = gtk_about_dialog_new ();
+	gtk_window_set_transient_for (GTK_WINDOW (win), GTK_WINDOW (self));
+	gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG (win), "elpea");
+	gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (win), "0.1");
+	gtk_about_dialog_set_copyright (GTK_ABOUT_DIALOG (win), "Copyright © 2009 Przemysław Sitek");
+	gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (win), "OpenGL image viewer");
+	gtk_about_dialog_set_license (GTK_ABOUT_DIALOG (win), "GPL v3");
+	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (win), "http://code.google.com/p/elpea/");
+	gtk_about_dialog_set_translator_credits (GTK_ABOUT_DIALOG (win), _("translator-credits"));
+//	gtk_about_dialog_set_logo (GTK_ABOUT_DIALOG (win), logo);
+
+	/* TODO: Use standard icon, this fancy logo doesn't look good enough */
+	GtkWidget *box = gtk_event_box_new ();
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (win)->vbox), box, FALSE, FALSE, 0);
+	gtk_box_reorder_child (GTK_BOX (GTK_DIALOG (win)->vbox), box, 0);
+	GdkColor black = {0, 0, 0, 0};
+	gtk_widget_modify_bg (box, GTK_STATE_NORMAL, &black);
+
+	GtkWidget *img = gtk_image_new ();
+	gtk_image_set_from_pixbuf (GTK_IMAGE (img), logo);
+	gtk_container_add (GTK_CONTAINER (box), img);
+
+	gtk_widget_show (img);
+	gtk_widget_show (box);
+
+
+	g_object_unref (G_OBJECT (logo));
+
+	gtk_dialog_run (GTK_DIALOG (win));
+	gtk_widget_hide (win);
+	gtk_widget_destroy (win);
+}
+
+
 /* UI actions */
 
 static GtkAction *
@@ -99,7 +142,7 @@ static const GtkActionEntry actions[] = {
 		{"Prev",    GTK_STOCK_GO_BACK, NULL, "<Alt>Left", N_("Previous image"), G_CALLBACK (dummy_callback)},
 		{"Next",    GTK_STOCK_GO_FORWARD, NULL, "<Alt>Right", N_("Next image"), G_CALLBACK (dummy_callback)},
 	{"Help", NULL, N_("Help")},
-		{"About",   GTK_STOCK_ABOUT, NULL, NULL, N_("About elpea"), G_CALLBACK (dummy_callback)}
+		{"About",   GTK_STOCK_ABOUT, NULL, NULL, N_("About elpea"), G_CALLBACK (_action_about)}
 
 };
 
