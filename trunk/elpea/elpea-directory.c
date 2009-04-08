@@ -52,19 +52,6 @@ elpea_directory_new (void)
 {
 	ElpeaDirectory *self = g_object_new (ELPEA_TYPE_DIRECTORY, NULL);
 
-	GObjectClass *klass = G_OBJECT_GET_CLASS (self);
-	g_print ("self is a %s\n", G_OBJECT_CLASS_NAME (klass));
-
-	g_print ("ElpeaDirectory is a GtkListStore: %d\n",
-			g_type_is_a (ELPEA_TYPE_DIRECTORY, GTK_TYPE_LIST_STORE));
-	g_print ("self is a GtkListStore: %d\n",
-			GTK_IS_LIST_STORE (self));
-	g_print ("self is a ElpeaDistectory: %d\n",
-			ELPEA_IS_DIRECTORY (self));
-
-	GType *t = ELPEA_TYPE_DIRECTORY;
-	g_print ("type name: %s\n", g_type_name (t));
-
 	return self;
 }
 
