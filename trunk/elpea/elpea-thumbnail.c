@@ -38,10 +38,11 @@ struct _ElpeaThumbnailPrivate
 	/* Private members go here */
 	GdkPixbuf   *thumbnail;
 
-	gchar       *name;
-	gint         width;
-	gint         height;
-	gsize        size;
+	gchar       *name;		/**< File name             */
+	gchar       *path;      /**< Full file path        */
+	gint         width;		/**< Original image width  */
+	gint         height;	/**< Original image height */
+	gsize        size;		/**< Original image size   */
 
 	gboolean disposed;
 };
@@ -69,13 +70,13 @@ elpea_thumbnail_new (const gchar *dirname, const gchar *file)
 
 	priv->thumbnail = elpea_thumbnail_scale (pix);
 	priv->name   = g_strdup (file);
+	priv->path   = path;
 	priv->width  = gdk_pixbuf_get_width (pix);
 	priv->height = gdk_pixbuf_get_height (pix);
 	priv->size   = get_file_size (path);
 
 	g_object_unref (G_OBJECT (pix));
 
-	g_free (path);
 	return self;
 }
 
@@ -160,6 +161,15 @@ elpea_thumbnail_get_name (ElpeaThumbnail *self)
 }
 
 
+const gchar *
+elpea_thumbnail_get_path (ElpeaThumbnail *self)
+{
+	ElpeaThumbnailPrivate *priv = self->priv;
+	return priv->path;
+}
+
+
+
 gint
 elpea_thumbnail_get_width (ElpeaThumbnail *self)
 {
@@ -209,6 +219,8 @@ elpea_thumbnail_dispose (GObject *object)
 	}
 	priv->disposed = TRUE;
 
+	g_free (priv->name);
+	g_free (priv->path);
 
 	/* Chain up to the parent class */
 	G_OBJECT_CLASS (elpea_thumbnail_parent_class)->dispose (object);
