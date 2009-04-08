@@ -268,15 +268,12 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_widget_show (vbox);
 
 	/* Main menu placeholder */
-//	GtkWidget *menubar = gtk_menu_new ();
 	GtkWidget *menubar = gtk_ui_manager_get_widget (priv->ui, "/menubar");
 	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, FALSE, 0);	// FIXME: Warning here
 	gtk_widget_show (menubar);
 
 	/* Toolbar placeholder */
-//	GtkWidget *toolbar = gtk_toolbar_new ();
 	GtkWidget *toolbar = gtk_ui_manager_get_widget (priv->ui, "/toolbar");
-	g_print ("toolbar=%p\n", toolbar);
 	gtk_box_pack_start (GTK_BOX (vbox), toolbar, FALSE, FALSE, 0);
 	gtk_widget_show (toolbar);
 
@@ -369,9 +366,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	g_signal_connect (G_OBJECT (priv->zoom_adjustment), "value-changed",
 	                  G_CALLBACK (zoom_adjustment_value_changed), self);
 
-//	priv->thumbnail_model = create_tree_model ();
 	ElpeaDirectory *dir = elpea_directory_new ();
-	g_print ("dir=%p (%d)\n", dir, ELPEA_IS_DIRECTORY (dir));
 	elpea_directory_load (dir, ".");
 	priv->thumbnail_model = dir;
 
