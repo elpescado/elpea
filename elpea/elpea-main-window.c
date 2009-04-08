@@ -27,13 +27,26 @@
 #include "elpea-directory.h"
 #include "elpea-main-window.h"
 #include "elpea-thumbnail-view.h"
+#include "elpea-thumbnail.h"
 
 #define N_(a) (a)
 #define _(a) (a)
 
+
 static void
 zoom_adjustment_value_changed (GtkAdjustment *adjustment,
                                ElpeaMainWindow *self);
+
+static void
+thumb_view_selection_changed_cb (GtkTreeSelection *selection, ElpeaMainWindow *data);
+
+
+static void
+elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path);
+
+
+
+
 
 
 G_DEFINE_TYPE (ElpeaMainWindow, elpea_main_window, GTK_TYPE_WINDOW)
@@ -288,6 +301,14 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_container_add (GTK_CONTAINER (sw1), thumb_view);
 	gtk_widget_show (thumb_view);
 
+	GtkTreeSelection *select;
+
+	select = gtk_tree_view_get_selection (GTK_TREE_VIEW (thumb_view));
+	gtk_tree_selection_set_mode (select, GTK_SELECTION_SINGLE);
+	g_signal_connect (G_OBJECT (select), "changed",
+	                  G_CALLBACK (thumb_view_selection_changed_cb), self);
+
+
 	/* Image preview */
 	GtkWidget *img = gtk_gl_image_new ();
 	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), "../data/elpea-logo.png");
@@ -351,7 +372,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 //	priv->thumbnail_model = create_tree_model ();
 	ElpeaDirectory *dir = elpea_directory_new ();
 	g_print ("dir=%p (%d)\n", dir, ELPEA_IS_DIRECTORY (dir));
-	elpea_directory_load (dir, "..");
+	elpea_directory_load (dir, ".");
 	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
@@ -374,6 +395,41 @@ zoom_adjustment_value_changed (GtkAdjustment *adjustment,
 	gtk_gl_image_set_zoom (priv->image, zoom);
 }
 
+
+static void
+thumb_view_selection_changed_cb (GtkTreeSelection *selection, ElpeaMainWindow *self)
+{
+	ElpeaMainWindowPrivate *priv = self->priv;
+
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	ElpeaThumbnail *thumb;
+
+	if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
+		gtk_tree_model_get (model, &iter, 0, &thumb, -1);
+		const char *path = elpea_thumbnail_get_path (thumb);
+		elpea_main_window_load_file (self, path);
+		g_object_unref (thumb);
+	}
+
+}
+
+
+/* 
+ * Window functions
+ */
+
+static void
+elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path)
+{
+	ElpeaMainWindowPrivate *priv = self->priv;
+	
+	gtk_gl_image_set_from_file (GTK_GL_IMAGE (priv->image), path);
+}
+
+/*
+ * GObject stuff
+ */
 
 static void
 elpea_main_window_dispose (GObject *object)

@@ -68,6 +68,9 @@ elpea_thumbnail_new				(const gchar *dirname, const gchar *file);
 const gchar *
 elpea_thumbnail_get_name (ElpeaThumbnail *self);
 
+const gchar *
+elpea_thumbnail_get_path (ElpeaThumbnail *self);
+
 gint
 elpea_thumbnail_get_width (ElpeaThumbnail *self);
 
