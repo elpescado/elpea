@@ -32,6 +32,7 @@
 #define N_(a) (a)
 #define _(a) (a)
 
+#define STCXID 0x17
 
 static void
 zoom_adjustment_value_changed (GtkAdjustment *adjustment,
@@ -57,9 +58,10 @@ struct _ElpeaMainWindowPrivate
 	GtkAdjustment *zoom_adjustment;
 
 	/* Widgets */
-	GtkActionGroup *action_group;
-	GtkUIManager *ui;
-	GtkGlImage *image;
+	GtkActionGroup  *action_group;
+	GtkUIManager    *ui;
+	GtkGlImage      *image;
+	GtkWidget       *zoom_statusbar;
 
 	GtkTreeModel *thumbnail_model;
 
@@ -87,12 +89,61 @@ dummy_callback (void)
 
 
 static void
+_zoom_changed (GObject    *gobject,
+               GParamSpec *pspec,
+	       gpointer    user_data)
+{
+	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
+	ElpeaMainWindowPrivate *priv = self->priv;
+
+	double zoom = gtk_gl_image_get_zoom (GTK_GL_IMAGE (priv->image));
+
+	gchar msg[10];
+	snprintf (msg, 10, "%d%%", (int)(100*zoom));
+
+	gtk_statusbar_pop (GTK_STATUSBAR (priv->zoom_statusbar), STCXID);
+	gtk_statusbar_push (GTK_STATUSBAR (priv->zoom_statusbar), STCXID, msg);
+}
+
+
+/* UI Action callbacks */
+
+static void
+_action_open (GtkAction *action,
+              gpointer   user_data)
+{
+	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
+
+	GtkWidget *win = gtk_file_chooser_dialog_new ("Open file",
+	                                              GTK_WINDOW (self),
+						      GTK_FILE_CHOOSER_ACTION_OPEN,
+						      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+						      GTK_STOCK_OPEN, GTK_RESPONSE_OK,
+						      NULL);
+	int code = gtk_dialog_run (GTK_DIALOG (win));
+	gtk_widget_hide (win);
+
+	if (code == GTK_RESPONSE_OK) {
+		gchar *file = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (win));
+		gchar *dir  = gtk_file_chooser_get_current_folder (GTK_FILE_CHOOSER (win));
+
+		elpea_main_window_load_file (self, file);
+
+		g_free (file);
+		g_free (dir);
+	}
+
+	gtk_widget_destroy (win);
+}
+
+
+static void
 _action_about (GtkAction *action,
                gpointer   user_data)
 {
 	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
 
-	GdkPixbuf *logo = gdk_pixbuf_new_from_file ("../data/elpea-logo.png", NULL);
+	GdkPixbuf *logo = gdk_pixbuf_new_from_file ("../data/elpea-icon.png", NULL);
 
 	GtkWidget *win = gtk_about_dialog_new ();
 	gtk_window_set_transient_for (GTK_WINDOW (win), GTK_WINDOW (self));
@@ -103,9 +154,10 @@ _action_about (GtkAction *action,
 	gtk_about_dialog_set_license (GTK_ABOUT_DIALOG (win), "GPL v3");
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (win), "http://code.google.com/p/elpea/");
 	gtk_about_dialog_set_translator_credits (GTK_ABOUT_DIALOG (win), _("translator-credits"));
-//	gtk_about_dialog_set_logo (GTK_ABOUT_DIALOG (win), logo);
+	gtk_about_dialog_set_logo (GTK_ABOUT_DIALOG (win), logo);
 
 	/* TODO: Use standard icon, this fancy logo doesn't look good enough */
+	/*
 	GtkWidget *box = gtk_event_box_new ();
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (win)->vbox), box, FALSE, FALSE, 0);
 	gtk_box_reorder_child (GTK_BOX (GTK_DIALOG (win)->vbox), box, 0);
@@ -118,7 +170,7 @@ _action_about (GtkAction *action,
 
 	gtk_widget_show (img);
 	gtk_widget_show (box);
-
+		*/
 
 	g_object_unref (G_OBJECT (logo));
 
@@ -140,7 +192,7 @@ _get_action (ElpeaMainWindow *self, const gchar *name)
 
 static const GtkActionEntry actions[] = {
 	{"File", NULL, N_("File")},
-		{"Open", GTK_STOCK_OPEN, NULL, "<Ctrl>o", N_("Open image"), G_CALLBACK (dummy_callback)},
+		{"Open", GTK_STOCK_OPEN, NULL, "<Ctrl>o", N_("Open image"), G_CALLBACK (_action_open)},
 		{"Quit", GTK_STOCK_QUIT, NULL, "<Ctrl>q", N_("Quit"), G_CALLBACK (gtk_main_quit)},
 	{"Edit", NULL, N_("Edit")},
 		{"Preferences", GTK_STOCK_PREFERENCES, NULL, "<Ctrl><Alt>p", N_("Preferences"), G_CALLBACK (dummy_callback)},
@@ -310,6 +362,8 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	GtkWidget *img = gtk_gl_image_new ();
 	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), "../data/elpea-logo.png");
 	gtk_widget_add_events (img, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect (G_OBJECT (img), "notify::zoom",		// TODO: check if this makes UI laggy
+	                  G_CALLBACK (_zoom_changed), self);
 	gtk_paned_add2 (GTK_PANED (paned), img);
 	gtk_widget_show (img);
 	priv->image = GTK_GL_IMAGE (img);
@@ -346,9 +400,12 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_widget_show (zoom_in_img);
 
 	GtkWidget *zoom_status = gtk_statusbar_new ();
+	gtk_widget_set_size_request (zoom_status, 64, 12);
 	gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR (zoom_status), TRUE);
+	gtk_statusbar_push (GTK_STATUSBAR (zoom_status), STCXID, "");
 	gtk_box_pack_start (GTK_BOX (status_box), zoom_status, FALSE, FALSE, 0);
 	gtk_widget_show (zoom_status);
+	priv->zoom_statusbar = zoom_status;
 
 
 }
@@ -371,6 +428,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
+	_zoom_changed (NULL, NULL, self);
 }
 
 
@@ -385,8 +443,6 @@ zoom_adjustment_value_changed (GtkAdjustment *adjustment,
 	ElpeaMainWindowPrivate *priv = self->priv;
 	double val = gtk_adjustment_get_value (adjustment);
 	double zoom = pow (2.0, val);
-	g_print ("value = %lf zoom = %lf\n", val, zoom);
-	g_print ("zoom_adjustment_value_changed: image=%p\n", priv->image);
 	gtk_gl_image_set_zoom (priv->image, zoom);
 }
 
