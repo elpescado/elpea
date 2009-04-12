@@ -45,6 +45,10 @@ thumb_view_selection_changed_cb (GtkTreeSelection *selection, ElpeaMainWindow *d
 static void
 elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path);
 
+static void
+elpea_main_window_load_dir (ElpeaMainWindow *self, const gchar *path);
+
+
 
 
 
@@ -62,6 +66,7 @@ struct _ElpeaMainWindowPrivate
 	GtkUIManager    *ui;
 	GtkGlImage      *image;
 	GtkWidget       *zoom_statusbar;
+	GtkWidget       *thumb_view;
 
 	GtkTreeModel *thumbnail_model;
 
@@ -128,6 +133,7 @@ _action_open (GtkAction *action,
 		gchar *dir  = gtk_file_chooser_get_current_folder (GTK_FILE_CHOOSER (win));
 
 		elpea_main_window_load_file (self, file);
+		elpea_main_window_load_dir (self, dir);
 
 		g_free (file);
 		g_free (dir);
@@ -349,6 +355,7 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_tree_view_set_model (GTK_TREE_VIEW (thumb_view), priv->thumbnail_model);
 	gtk_container_add (GTK_CONTAINER (sw1), thumb_view);
 	gtk_widget_show (thumb_view);
+	priv->thumb_view = thumb_view;
 
 	GtkTreeSelection *select;
 
@@ -424,7 +431,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	                  G_CALLBACK (zoom_adjustment_value_changed), self);
 
 	ElpeaDirectory *dir = elpea_directory_new ();
-	elpea_directory_load (dir, ".");
+	elpea_directory_load (dir, "..");
 	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
@@ -477,6 +484,20 @@ elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path)
 	
 	gtk_gl_image_set_from_file (GTK_GL_IMAGE (priv->image), path);
 }
+
+
+static void
+elpea_main_window_load_dir (ElpeaMainWindow *self,
+                            const gchar     *path)
+{
+	ElpeaMainWindowPrivate *priv = self->priv;
+
+	ElpeaDirectory *dir = elpea_directory_new ();
+	elpea_directory_load (dir, path);
+	priv->thumbnail_model = dir;
+	gtk_tree_view_set_model (GTK_TREE_VIEW (priv->thumb_view), priv->thumbnail_model);
+}
+
 
 /*
  * GObject stuff
