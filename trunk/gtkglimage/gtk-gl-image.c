@@ -38,6 +38,20 @@
 
 G_DEFINE_TYPE (GtkGlImage, gtk_gl_image, GTK_TYPE_DRAWING_AREA)
 
+enum props {
+	PROP_0,
+
+	PROP_PIXBUF,
+	PROP_FILE,
+	PROP_ZOOM,
+	PROP_ROTATION,
+	PROP_ANIMATIONS,
+	PROP_REFLECTION
+};
+
+const double ZOOM_MIN = 0.125;
+const double ZOOM_MAX = 8.0;
+
 struct _GtkGlImagePrivate
 {
 	/* Private members go here */
@@ -52,8 +66,8 @@ struct _GtkGlImagePrivate
 	gint       rotation;
 
 	/* Eye candy */
-	gboolean   animations;
-	gboolean   reflection;
+	gboolean   animations;	/* Whether animations are enabled              */
+	gboolean   reflection;	/* Whether to draw reflection beneath image    */
 
 	gboolean disposed;
 };
@@ -317,6 +331,8 @@ gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
 	//g_print (" -> ratio = %lf\n", priv->ratio);
 
 	redraw (self);
+
+	g_object_notify (G_OBJECT (self), "pixbuf");
 }
 
 
@@ -328,6 +344,7 @@ gtk_gl_image_set_from_file (GtkGlImage *self,
 	GdkPixbuf *pix = gdk_pixbuf_new_from_file (file, NULL);
 	gtk_gl_image_set_from_pixbuf (self, pix);
 	g_object_unref (G_OBJECT (pix));
+	g_object_notify (G_OBJECT (self), "file");
 }
 
 
@@ -354,7 +371,7 @@ gtk_gl_image_set_zoom (GtkGlImage *self,
 	GtkGlImagePrivate *priv = self->priv;
 	priv->zoom = zoom;
 	redraw (self);
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	g_object_notify (G_OBJECT (self), "zoom");
 }
 
 
@@ -362,9 +379,8 @@ void
 gtk_gl_image_zoom_in (GtkGlImage *self)
 {
 	GtkGlImagePrivate *priv = self->priv;
-	priv->zoom *= 2.0;
+	gtk_gl_image_set_zoom (self, priv->zoom * 2.0);
 	redraw (self);
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
 }
 
 
@@ -372,17 +388,16 @@ void
 gtk_gl_image_zoom_out (GtkGlImage *self)
 {
 	GtkGlImagePrivate *priv = self->priv;
-	priv->zoom *= 0.5;
+	gtk_gl_image_set_zoom (self, priv->zoom * 0.5);
 	redraw (self);
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
 }
 
 
 gfloat
 gtk_gl_image_get_zoom (GtkGlImage *self)
 {
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
-	return 1.0;
+	GtkGlImagePrivate *priv = self->priv;
+	return priv->zoom;
 }
 
 
@@ -394,6 +409,7 @@ gtk_gl_image_set_rotation (GtkGlImage *self,
                            gint angle)
 {
 	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	g_object_notify (G_OBJECT (self), "rotation");
 }
 
 
@@ -427,6 +443,7 @@ gtk_gl_image_set_animations (GtkGlImage *self,
 	                         gboolean animations)
 {
 	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	g_object_notify (G_OBJECT (self), "animations");
 }
 
 
@@ -445,6 +462,7 @@ gtk_gl_image_set_reflection (GtkGlImage *self,
 	GtkGlImagePrivate *priv = self->priv;
 	priv->reflection = reflection;
 	redraw (self);
+	g_object_notify (G_OBJECT (self), "reflection");
 }
 
 
@@ -596,6 +614,30 @@ gtk_gl_image_get_property (GObject *object, guint property_id,
 	GtkGlImagePrivate* priv = self->priv;
 
 	switch (property_id) {
+		case PROP_PIXBUF:
+			g_value_set_object (value, priv->pixbuf);
+			break;
+			
+		case PROP_FILE:
+			g_value_set_string (value, NULL); // FIXME
+			break;
+			
+		case PROP_ZOOM:
+			g_value_set_double (value, priv->zoom);
+			break;
+			
+		case PROP_ROTATION:
+			g_value_set_int (value, priv->rotation);
+			break;
+			
+		case PROP_ANIMATIONS:
+			g_value_set_boolean (value, priv->animations);
+			break;
+			
+		case PROP_REFLECTION:
+			g_value_set_boolean (value, priv->reflection);
+			break;
+			
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 	}
@@ -610,6 +652,30 @@ gtk_gl_image_set_property (GObject *object, guint property_id,
 	GtkGlImagePrivate* priv = self->priv;
 
 	switch (property_id) {
+		case PROP_PIXBUF:
+			gtk_gl_image_set_from_pixbuf (self, g_value_get_object (value));
+			break;
+			
+		case PROP_FILE:
+			gtk_gl_image_set_from_file (self, g_value_get_string (value));
+			break;
+			
+		case PROP_ZOOM:
+			gtk_gl_image_set_zoom (self, g_value_get_double (value));
+			break;
+			
+		case PROP_ROTATION:
+			gtk_gl_image_set_rotation (self, g_value_get_int (value));
+			break;
+			
+		case PROP_ANIMATIONS:
+			gtk_gl_image_set_animations (self, g_value_get_boolean (value));
+			break;
+			
+		case PROP_REFLECTION:
+			gtk_gl_image_set_reflection (self, g_value_get_boolean (value));
+			break;
+			
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 	}
@@ -630,6 +696,52 @@ gtk_gl_image_class_init (GtkGlImageClass *klass)
 	widget_class->realize = realize;
 	widget_class->configure_event = configure_event;
 	widget_class->expose_event = expose_event;
+
+	/* Install properties */
+
+	g_object_class_install_property (gobject_class, PROP_PIXBUF,
+		g_param_spec_object ("pixbuf",
+		                     "Pixbuf to be displayed",
+				     "Specifies pixbuf to be shown in this widget",
+				     GDK_TYPE_PIXBUF,
+				     G_PARAM_READWRITE));
+	g_object_class_install_property (gobject_class, PROP_FILE,
+		g_param_spec_string ("file",
+		                     "Filename to be displayed",
+				     "Specifies image file name to be shown",
+				     NULL,
+				     G_PARAM_READWRITE));
+	g_object_class_install_property (gobject_class, PROP_ZOOM,
+		g_param_spec_double ("zoom",
+		                     "Zoom level",
+				     "Zoom level",
+				     ZOOM_MIN,
+				     ZOOM_MAX,
+				     1.0,
+				     G_PARAM_READWRITE));
+	g_object_class_install_property (gobject_class, PROP_ROTATION,
+		g_param_spec_int ("rotation",
+			          "Image rotation",
+				  "Image rotation in degrees",
+				  0,
+				  360,
+				  0,
+				  G_PARAM_READWRITE));
+	g_object_class_install_property (gobject_class, PROP_ANIMATIONS,
+		g_param_spec_boolean ("animations",
+			              "Toggle animations",
+				      "Enable animations",
+				      FALSE,
+				      G_PARAM_READWRITE));
+	g_object_class_install_property (gobject_class, PROP_REFLECTION,
+		g_param_spec_boolean ("reflection",
+			              "Toggle reflection",
+				      "Enable reflection effect",
+				      TRUE,
+				      G_PARAM_READWRITE));
+
+
+
 
 	g_type_class_add_private (klass, sizeof (GtkGlImagePrivate));
 }
