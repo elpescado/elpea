@@ -208,6 +208,25 @@ _action_zoom  (GtkAction *action,
 		g_print ("Invalid action: '%s'\n", name);
 }
 
+static void
+_action_rotate  (GtkAction *action,
+               gpointer   user_data)
+{
+	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
+	ElpeaMainWindowPrivate *priv = self->priv;
+	GtkGlImage *img = GTK_GL_IMAGE (priv->image);
+
+	const gchar *name = gtk_action_get_name (action);
+
+	if (strcmp (name, "RotateLeft") == 0)
+		gtk_gl_image_rotate_left (img);
+	else if (strcmp (name, "RotateRight") == 0)
+		gtk_gl_image_rotate_right (img);
+	else 
+		g_print ("Invalid action: '%s'\n", name);
+}
+
+
 /* UI actions */
 
 static GtkAction *
@@ -229,8 +248,8 @@ static const GtkActionEntry actions[] = {
 		{"ZoomOut",    GTK_STOCK_ZOOM_OUT, NULL, "minus", N_("Zoom image out"), G_CALLBACK (_action_zoom)},
 		{"Zoom1",      GTK_STOCK_ZOOM_100, NULL, "1", N_("Normal zoom"), G_CALLBACK (_action_zoom)},
 		{"ZoomFit",    GTK_STOCK_ZOOM_FIT, NULL, "f", N_("Fit to window"), G_CALLBACK (_action_zoom)},
-		{"RotateLeft", "object-rotate-left", "Rotate Left", "l", N_("Rotate image counter-clockwise"), G_CALLBACK (dummy_callback)},
-		{"RotateRight","object-rotate-right", "Rotate Right", "r", N_("Rotate image clockwise"), G_CALLBACK (dummy_callback)},
+		{"RotateLeft", "object-rotate-left", "Rotate Left", "l", N_("Rotate image counter-clockwise"), G_CALLBACK (_action_rotate)},
+		{"RotateRight","object-rotate-right", "Rotate Right", "r", N_("Rotate image clockwise"), G_CALLBACK (_action_rotate)},
 	{"Go", NULL, N_("Go")},
 		{"Prev",    GTK_STOCK_GO_BACK, NULL, "<Alt>Left", N_("Previous image"), G_CALLBACK (dummy_callback)},
 		{"Next",    GTK_STOCK_GO_FORWARD, NULL, "<Alt>Right", N_("Next image"), G_CALLBACK (dummy_callback)},
@@ -516,7 +535,7 @@ elpea_main_window_load_dir (ElpeaMainWindow *self,
 
 	ElpeaDirectory *dir = elpea_directory_new ();
 	elpea_directory_load (dir, path);
-	priv->thumbnail_model = dir;
+	priv->thumbnail_model = GTK_TREE_MODEL (dir);
 	gtk_tree_view_set_model (GTK_TREE_VIEW (priv->thumb_view), priv->thumbnail_model);
 }
 

@@ -297,13 +297,16 @@ render (GtkGlImage *self)
 	//g_print ("Binding texture %u\n", priv->tex_id);
 	glBindTexture (GL_TEXTURE_2D, priv->tex_id);
 	
-	glBegin (GL_QUADS);
-		glColor3f (1.0f, 1.0f, 1.0f);
-		glTexCoord2i (1, 1);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
-		glTexCoord2i (0, 1);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
-		glTexCoord2i (0, 0);	glVertex3f (-1.0f*hscale,  1.0f*scale, 0.0f);
-		glTexCoord2i (1, 0);	glVertex3f ( 1.0f*hscale,  1.0f*scale, 0.0f);
-	glEnd ();
+	glPushMatrix ();
+		glRotated (priv->rotation, 0, 0, -1);
+		glBegin (GL_QUADS);
+			glColor3f (1.0f, 1.0f, 1.0f);
+			glTexCoord2i (1, 1);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
+			glTexCoord2i (0, 1);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
+			glTexCoord2i (0, 0);	glVertex3f (-1.0f*hscale,  1.0f*scale, 0.0f);
+			glTexCoord2i (1, 0);	glVertex3f ( 1.0f*hscale,  1.0f*scale, 0.0f);
+		glEnd ();
+	glPopMatrix ();
 
 
 	/* Draw reflection */
@@ -443,7 +446,17 @@ void
 gtk_gl_image_set_rotation (GtkGlImage *self,
                            gint angle)
 {
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	g_return_if_fail (self != NULL);
+	g_return_if_fail (angle % 90 == 0);
+
+	GtkGlImagePrivate *priv = self->priv;
+
+	/* Normalize angle */
+	while (angle >= 360)
+		angle -= 360;
+
+	priv->rotation = angle;
+	redraw (self);
 	g_object_notify (G_OBJECT (self), "rotation");
 }
 
@@ -452,22 +465,30 @@ gtk_gl_image_set_rotation (GtkGlImage *self,
 void
 gtk_gl_image_rotate_left (GtkGlImage *self)
 {
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	g_return_if_fail (self != NULL);
+
+	GtkGlImagePrivate *priv = self->priv;
+	gtk_gl_image_set_rotation (self, priv->rotation + 270);
 }
 
 
 void
 gtk_gl_image_rotate_right (GtkGlImage *self)
 {
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
+	g_return_if_fail (self != NULL);
+
+	GtkGlImagePrivate *priv = self->priv;
+	gtk_gl_image_set_rotation (self, priv->rotation + 90);
 }
 
 
 gint
 gtk_gl_image_get_rotation (GtkGlImage *self)
 {
-	g_printerr ("*** Function %s not implemented\n", __FUNCTION__);
-	return 0;
+	g_return_if_fail (self != NULL);
+
+	GtkGlImagePrivate *priv = self->priv;
+	return priv->rotation;
 }
 
 
