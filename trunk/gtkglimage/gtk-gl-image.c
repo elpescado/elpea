@@ -64,6 +64,7 @@ struct _GtkGlImagePrivate
 	/* Zoom and rotation */
 	gfloat     zoom;
 	gint       rotation;
+	gboolean   auto_fit;
 
 	/* Eye candy */
 	gboolean   animations;	/* Whether animations are enabled              */
@@ -76,6 +77,24 @@ struct _GtkGlImagePrivate
 #define GTK_GL_IMAGE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
 	GTK_TYPE_GL_IMAGE, GtkGlImagePrivate))
+
+static gdouble
+gtk_gl_image_calculate_zoom_fit (GtkGlImage *self)
+{
+	GtkGlImagePrivate *priv = self->priv;
+	GtkWidget *widget = GTK_WIDGET (self);
+
+	if (priv->pixbuf == NULL)
+		return 1.0;
+
+	if (! GTK_WIDGET_REALIZED (widget))
+		return 1.0;
+
+	double rx = (double)widget->allocation.width / (double)gdk_pixbuf_get_width (priv->pixbuf);
+	double ry = (double)widget->allocation.height / (double)gdk_pixbuf_get_height (priv->pixbuf);
+
+	return MIN(MIN(rx,ry)*0.9,1.0);
+}
 
 
 GtkWidget*
@@ -109,6 +128,7 @@ gtk_gl_image_init (GtkGlImage *self)
 	GtkGlImagePrivate *priv = self->priv;
 
 	priv->zoom = 1.0f;
+	priv->auto_fit = TRUE;
 
 	priv->animations = FALSE;
 	priv->reflection = TRUE;
@@ -329,6 +349,9 @@ gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
 	//g_print (" -> pix = %p\n", priv->pixbuf);
 	//g_print (" -> tex = %u\n", priv->tex_id);
 	//g_print (" -> ratio = %lf\n", priv->ratio);
+	if (priv->auto_fit) {
+		priv->zoom = gtk_gl_image_calculate_zoom_fit (self);
+	}
 
 	redraw (self);
 
@@ -380,7 +403,6 @@ gtk_gl_image_zoom_in (GtkGlImage *self)
 {
 	GtkGlImagePrivate *priv = self->priv;
 	gtk_gl_image_set_zoom (self, priv->zoom * 2.0);
-	redraw (self);
 }
 
 
@@ -389,8 +411,21 @@ gtk_gl_image_zoom_out (GtkGlImage *self)
 {
 	GtkGlImagePrivate *priv = self->priv;
 	gtk_gl_image_set_zoom (self, priv->zoom * 0.5);
-	redraw (self);
 }
+
+
+void
+gtk_gl_image_zoom_fit (GtkGlImage *self)
+{
+	GtkGlImagePrivate *priv = self->priv;
+
+	if (priv->pixbuf == NULL)
+		return;
+
+	gdouble new_zoom = gtk_gl_image_calculate_zoom_fit (self);
+	gtk_gl_image_set_zoom (self, new_zoom);
+}
+
 
 
 gfloat
