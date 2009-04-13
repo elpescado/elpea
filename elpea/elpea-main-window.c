@@ -87,9 +87,11 @@ elpea_main_window_new (void)
 }
 
 void
-dummy_callback (void)
+dummy_callback (GtkAction *action,
+                gpointer   user_data)
 {
-	g_print (" *** dummy callback called ***\n");
+	const gchar *name = gtk_action_get_name (action);
+	g_print (" *** dummy callback for action '%s' called ***\n", name);
 }
 
 
@@ -185,6 +187,26 @@ _action_about (GtkAction *action,
 	gtk_widget_destroy (win);
 }
 
+static void
+_action_zoom  (GtkAction *action,
+               gpointer   user_data)
+{
+	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
+	ElpeaMainWindowPrivate *priv = self->priv;
+	GtkGlImage *img = GTK_GL_IMAGE (priv->image);
+
+	const gchar *name = gtk_action_get_name (action);
+	if (strcmp (name, "ZoomIn") == 0)
+		gtk_gl_image_zoom_in (img);
+	else if (strcmp (name, "ZoomOut") == 0)
+		gtk_gl_image_zoom_out (img);
+	else if (strcmp (name, "Zoom1") == 0)
+		gtk_gl_image_set_zoom (img, 1.0);
+	else if (strcmp (name, "ZoomFit") == 0)
+		gtk_gl_image_zoom_fit (img);
+	else 
+		g_print ("Invalid action: '%s'\n", name);
+}
 
 /* UI actions */
 
@@ -203,10 +225,10 @@ static const GtkActionEntry actions[] = {
 	{"Edit", NULL, N_("Edit")},
 		{"Preferences", GTK_STOCK_PREFERENCES, NULL, "<Ctrl><Alt>p", N_("Preferences"), G_CALLBACK (dummy_callback)},
 	{"View", NULL, N_("View")},
-		{"ZoomIn",     GTK_STOCK_ZOOM_IN, NULL, "plus", N_("Zoom image in"), G_CALLBACK (dummy_callback)},
-		{"ZoomOut",    GTK_STOCK_ZOOM_OUT, NULL, "minus", N_("Zoom image out"), G_CALLBACK (dummy_callback)},
-		{"Zoom1",      GTK_STOCK_ZOOM_100, NULL, "1", N_("Normal zoom"), G_CALLBACK (dummy_callback)},
-		{"ZoomFit",    GTK_STOCK_ZOOM_FIT, NULL, "f", N_("Fit to window"), G_CALLBACK (dummy_callback)},
+		{"ZoomIn",     GTK_STOCK_ZOOM_IN, NULL, "plus", N_("Zoom image in"), G_CALLBACK (_action_zoom)},
+		{"ZoomOut",    GTK_STOCK_ZOOM_OUT, NULL, "minus", N_("Zoom image out"), G_CALLBACK (_action_zoom)},
+		{"Zoom1",      GTK_STOCK_ZOOM_100, NULL, "1", N_("Normal zoom"), G_CALLBACK (_action_zoom)},
+		{"ZoomFit",    GTK_STOCK_ZOOM_FIT, NULL, "f", N_("Fit to window"), G_CALLBACK (_action_zoom)},
 		{"RotateLeft", "object-rotate-left", "Rotate Left", "l", N_("Rotate image counter-clockwise"), G_CALLBACK (dummy_callback)},
 		{"RotateRight","object-rotate-right", "Rotate Right", "r", N_("Rotate image clockwise"), G_CALLBACK (dummy_callback)},
 	{"Go", NULL, N_("Go")},

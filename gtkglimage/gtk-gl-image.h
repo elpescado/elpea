@@ -103,6 +103,9 @@ gtk_gl_image_zoom_in (GtkGlImage *self);
 void
 gtk_gl_image_zoom_out (GtkGlImage *self);
 
+void
+gtk_gl_image_zoom_fit (GtkGlImage *self);
+
 gfloat
 gtk_gl_image_get_zoom (GtkGlImage *self);
 
