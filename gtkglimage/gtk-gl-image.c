@@ -352,13 +352,18 @@ gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
 	//g_print (" -> pix = %p\n", priv->pixbuf);
 	//g_print (" -> tex = %u\n", priv->tex_id);
 	//g_print (" -> ratio = %lf\n", priv->ratio);
+	
+	g_object_freeze_notify (G_OBJECT (self));
+
 	if (priv->auto_fit) {
 		priv->zoom = gtk_gl_image_calculate_zoom_fit (self);
+		g_object_notify (G_OBJECT (self), "zoom");
 	}
 
 	redraw (self);
 
 	g_object_notify (G_OBJECT (self), "pixbuf");
+	g_object_thaw_notify (G_OBJECT (self));
 }
 
 
@@ -395,9 +400,11 @@ gtk_gl_image_set_zoom (GtkGlImage *self,
                        gfloat zoom)
 {
 	GtkGlImagePrivate *priv = self->priv;
+	gfloat old_zoom = priv->zoom;
 	priv->zoom = zoom;
 	redraw (self);
-	g_object_notify (G_OBJECT (self), "zoom");
+	if (old_zoom != priv->zoom);
+		g_object_notify (G_OBJECT (self), "zoom");
 }
 
 
