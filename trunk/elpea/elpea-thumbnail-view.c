@@ -100,7 +100,8 @@ cell_data_func                                          (GtkTreeViewColumn *tree
 	gint width = elpea_thumbnail_get_width (thumb);
 	gint height = elpea_thumbnail_get_height (thumb);
 
-	gchar *txt = g_strdup_printf ("<b>%s</b>\n<small>%dx%d pixels\n%d bytes</small>", file, width, height, size);
+	//gchar *txt = g_strdup_printf ("<b>%s</b>\n<small>%dx%d pixels\n%d bytes</small>", file, width, height, size);
+	gchar *txt = g_strdup_printf ("<b>%s</b>\n<small>%d\342\250\257%d pixels\n%d bytes</small>", file, width, height, size);
 	g_object_set (G_OBJECT (cell), "markup", txt, NULL);
 	g_free (txt);
 
