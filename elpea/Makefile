@@ -9,6 +9,7 @@ OBJECTS=\
 	elpea-thumbnail.o \
 	main.o \
 	utils.o \
+	../gtkglimage/marshallers.o \
 	../gtkglimage/gtk-gl-image.o
 
 all: elpea

@@ -71,6 +71,10 @@ struct _GtkGlImagePrivate
 	gboolean   animations;	/* Whether animations are enabled              */
 	gboolean   reflection;	/* Whether to draw reflection beneath image    */
 
+	/* Scrolling */
+	GtkAdjustment *hadjustment;
+	GtkAdjustment *vadjustment;
+
 	gboolean disposed;
 };
 
@@ -78,6 +82,14 @@ struct _GtkGlImagePrivate
 #define GTK_GL_IMAGE_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
 	GTK_TYPE_GL_IMAGE, GtkGlImagePrivate))
+
+
+static void
+update_adjustments (GtkGlImage *self);
+
+static float
+calculate_scrollbar_position (GtkAdjustment *adj);
+
 
 static gdouble
 gtk_gl_image_calculate_zoom_fit (GtkGlImage *self)
@@ -285,51 +297,55 @@ render (GtkGlImage *self)
 	double win_h = widget->allocation.height;
 
 	GLfloat scale = img_h * 8.0 / win_h;
-
-	//g_print ("img_h = %lf win_h = %lf\n", img_h, win_h);
-
 	GLfloat hscale = scale * priv->ratio;
-	glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
 
-	/* Draw object */
+	/* Compute translation vector for scrolling */
+//	GLfloat ax = gtk_adjustment_get_value (priv->hadjustment) * -0.01;
+	GLfloat ax = (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * -4 * priv->zoom;
+	GLfloat ay = (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * 4 * priv->zoom;
+
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	//g_print ("Binding texture %u\n", priv->tex_id);
-	glBindTexture (GL_TEXTURE_2D, priv->tex_id);
-	
-	glPushMatrix ();
-		glRotated (priv->rotation, 0, 0, -1);
-		glBegin (GL_QUADS);
-			glColor3f (1.0f, 1.0f, 1.0f);
-			glTexCoord2i (1, 1);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
-			glTexCoord2i (0, 1);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
-			glTexCoord2i (0, 0);	glVertex3f (-1.0f*hscale,  1.0f*scale, 0.0f);
-			glTexCoord2i (1, 0);	glVertex3f ( 1.0f*hscale,  1.0f*scale, 0.0f);
-		glEnd ();
-	glPopMatrix ();
+//	glTranslatef (ax, ay, 0.0f);
+	glPushMatrix ();	
+		//glTranslatef (ax, ay, -8.0f/priv->zoom);
+		glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
 
-
-	/* Draw reflection */
-
-	if (priv->reflection) {
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-//		glBindTexture (GL_TEXTURE_2D, 0);
-
+		/* Draw object */
 		glPushMatrix ();
-			glTranslatef (0.0f, -1.1f*scale, 0.0f);
+			glRotatef (priv->rotation, 0.0f, 0.0f, -1.0f);
+
+			glBindTexture (GL_TEXTURE_2D, priv->tex_id);
 			glBegin (GL_QUADS);
-				glColor4f (1.0f, 1.0f, 1.0f, 0.0f);
-				glTexCoord2f (1.0f, 0.5f);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
-				glTexCoord2f (0.0f, 0.5f);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
-				glColor4f (1.0f, 1.0f, 1.0f, 0.3f);
-				glTexCoord2f (0.0f, 1.f);	glVertex3f (-1.0f*hscale,  .0f*scale, 0.0f);
-				glTexCoord2f (1.0f, 1.f);	glVertex3f ( 1.0f*hscale,  .0f*scale, 0.0f);
+				glColor3f (1.0f, 1.0f, 1.0f);
+				glTexCoord2i (1, 1);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
+				glTexCoord2i (0, 1);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
+				glTexCoord2i (0, 0);	glVertex3f (-1.0f*hscale,  1.0f*scale, 0.0f);
+				glTexCoord2i (1, 0);	glVertex3f ( 1.0f*hscale,  1.0f*scale, 0.0f);
 			glEnd ();
 		glPopMatrix ();
-	}
+
+
+		/* Draw reflection */
+
+		if (priv->reflection) {
+			glEnable (GL_BLEND);
+			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			glPushMatrix ();
+				glTranslatef (0.0f, -1.1f*scale, 0.0f);
+				glBegin (GL_QUADS);
+					glColor4f (1.0f, 1.0f, 1.0f, 0.0f);
+					glTexCoord2f (1.0f, 0.5f);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
+					glTexCoord2f (0.0f, 0.5f);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
+					glColor4f (1.0f, 1.0f, 1.0f, 0.3f);
+					glTexCoord2f (0.0f, 1.f);	glVertex3f (-1.0f*hscale,  .0f*scale, 0.0f);
+					glTexCoord2f (1.0f, 1.f);	glVertex3f ( 1.0f*hscale,  .0f*scale, 0.0f);
+				glEnd ();
+			glPopMatrix ();
+		}
+	glPopMatrix ();
 }
 
 
@@ -404,6 +420,9 @@ gtk_gl_image_set_zoom (GtkGlImage *self,
 	gfloat old_zoom = priv->zoom;
 	priv->zoom = zoom;
 	redraw (self);
+
+	update_adjustments (self);
+
 	if (old_zoom != priv->zoom);
 		g_object_notify (G_OBJECT (self), "zoom");
 }
@@ -665,13 +684,91 @@ expose_event (GtkWidget      *widget,
 /*
  * Scrolling
  */
+static float
+calculate_scrollbar_position (GtkAdjustment *adj)
+{
+	if (adj == NULL)
+		return 0.0f;
+
+	gdouble lower = gtk_adjustment_get_lower (adj);
+	gdouble value = gtk_adjustment_get_value (adj);
+	gdouble upper = gtk_adjustment_get_upper (adj);
+	gdouble psize = gtk_adjustment_get_page_size (adj);
+	
+	return (float) (value / (upper-psize));
+}
+
+static void
+adjustments_changed (GtkAdjustment *adj,
+                     gpointer user_data)
+{
+	GtkGlImage *self = GTK_GL_IMAGE (user_data);
+	GtkGlImagePrivate *priv = self->priv;
+
+	gdouble lower = gtk_adjustment_get_lower (priv->hadjustment);
+	gdouble value = gtk_adjustment_get_value (priv->hadjustment);
+	gdouble upper = gtk_adjustment_get_upper (priv->hadjustment);
+	gdouble psize = gtk_adjustment_get_page_size (priv->hadjustment);
+	
+	gdouble pos = value / (upper-psize);
+
+	g_print ("adjustments_changed: %lf %lf %lf %lf (%lf)\n", lower, value, upper, psize, pos);
+	redraw (self);
+}
+
+
+static void
+update_adjustments (GtkGlImage *self)
+{
+	g_print ("update_adjustments\n");
+	GtkWidget *widget = GTK_WIDGET (self);
+	GtkGlImagePrivate *priv = self->priv;
+
+	if (priv->pixbuf == NULL)
+		return;
+	
+	GtkAllocation *a = &(widget->allocation);
+	gfloat ww = a->width;
+	gfloat cw = gdk_pixbuf_get_width (priv->pixbuf) * priv->zoom;
+	gfloat wh = a->height;
+	gfloat ch = gdk_pixbuf_get_height (priv->pixbuf) * priv->zoom;
+
+	g_object_freeze_notify (G_OBJECT (priv->hadjustment));
+	g_object_freeze_notify (G_OBJECT (priv->vadjustment));
+
+
+	gtk_adjustment_set_lower (priv->hadjustment, 0.0);
+	gtk_adjustment_set_lower (priv->vadjustment, 0.0);
+
+	gtk_adjustment_set_page_size (priv->hadjustment, ww);
+	gtk_adjustment_set_page_size (priv->vadjustment, wh);
+
+	gtk_adjustment_set_upper (priv->hadjustment, cw);
+	gtk_adjustment_set_upper (priv->vadjustment, ch);
+	
+	g_object_thaw_notify (G_OBJECT (priv->hadjustment));
+	g_object_thaw_notify (G_OBJECT (priv->vadjustment));
+
+}
+
+
 static void 
 gtk_gl_image_set_scroll_adjustments (GtkGlImage *self,
                                      GtkAdjustment *hadjustment, 
                                      GtkAdjustment *vadjustment)
 {
+	GtkGlImagePrivate *priv = self->priv;
+
 	g_print ("gtk_gl_image_set_scroll_adjustments (%p, %p\n",
 			 hadjustment, vadjustment);
+
+	priv->hadjustment = hadjustment;
+	priv->vadjustment = vadjustment;
+
+	g_signal_connect (G_OBJECT (hadjustment), "value-changed",
+	                  G_CALLBACK (adjustments_changed), self);
+	g_signal_connect (G_OBJECT (vadjustment), "value-changed",
+	                  G_CALLBACK (adjustments_changed), self);
 }
 
 
