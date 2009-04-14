@@ -62,6 +62,9 @@ struct _GtkGlImageClass
 	GtkDrawingAreaClass		parent;
 
 	/* Signals */
+	void (*set_scroll_adjustments) (GtkViewport *viewport,
+	                                GtkAdjustment *hadjustment,
+									GtkAdjustment *vadjustment);
 };
 
 

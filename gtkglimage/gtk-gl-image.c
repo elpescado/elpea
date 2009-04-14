@@ -34,6 +34,7 @@
 #include <GL/glu.h>
 
 #include "gtk-gl-image.h"
+#include "marshallers.h"
 
 
 G_DEFINE_TYPE (GtkGlImage, gtk_gl_image, GTK_TYPE_DRAWING_AREA)
@@ -661,6 +662,18 @@ expose_event (GtkWidget      *widget,
 	return TRUE;
 }
 
+/*
+ * Scrolling
+ */
+static void 
+gtk_gl_image_set_scroll_adjustments (GtkGlImage *self,
+                                     GtkAdjustment *hadjustment, 
+                                     GtkAdjustment *vadjustment)
+{
+	g_print ("gtk_gl_image_set_scroll_adjustments (%p, %p\n",
+			 hadjustment, vadjustment);
+}
+
 
 static void
 gtk_gl_image_finalize (GObject *object)
@@ -760,6 +773,8 @@ gtk_gl_image_class_init (GtkGlImageClass *klass)
 	widget_class->configure_event = configure_event;
 	widget_class->expose_event = expose_event;
 
+	klass->set_scroll_adjustments = gtk_gl_image_set_scroll_adjustments;
+
 	/* Install properties */
 
 	g_object_class_install_property (gobject_class, PROP_PIXBUF,
@@ -804,6 +819,18 @@ gtk_gl_image_class_init (GtkGlImageClass *klass)
 				      G_PARAM_READWRITE));
 
 
+	/* Signals */
+
+	widget_class->set_scroll_adjustments_signal =
+		g_signal_new ("set-scroll-adjustments",
+		              G_OBJECT_CLASS_TYPE (gobject_class), 
+					  G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+					  G_STRUCT_OFFSET (GtkGlImageClass, set_scroll_adjustments),
+					  NULL, NULL,
+					  g_cclosure_user_marshal_VOID__OBJECT_OBJECT,
+					  G_TYPE_NONE, 2, 
+					  GTK_TYPE_ADJUSTMENT,
+					  GTK_TYPE_ADJUSTMENT);
 
 
 	g_type_class_add_private (klass, sizeof (GtkGlImagePrivate));

@@ -40,13 +40,16 @@ int main (int argc, char *argv[])
 	GtkWidget *window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title (GTK_WINDOW (window), "GtkGlImage demo");
 
+	GtkWidget *sw = gtk_scrolled_window_new (NULL, NULL);
+
 	GtkWidget *img = gtk_gl_image_new ();
 	gtk_widget_add_events (img, GDK_BUTTON_PRESS_MASK);
 	gtk_widget_set_size_request (img, 128, 128);
 	gtk_window_set_default_size (GTK_WINDOW (window), 800, 480);
 	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), argv[1]);
 
-	gtk_container_add (GTK_CONTAINER (window), img);
+	gtk_container_add (GTK_CONTAINER (window), sw);
+	gtk_container_add (GTK_CONTAINER (sw), img);
 
 	g_signal_connect (G_OBJECT (window), "delete_event",
 	                  G_CALLBACK (gtk_main_quit), NULL);
@@ -56,6 +59,7 @@ int main (int argc, char *argv[])
 	                  G_CALLBACK (scroll_cb), NULL);
 
 	gtk_widget_show (img);
+	gtk_widget_show (sw);
 	gtk_widget_show (window);
 
 	gtk_main ();
