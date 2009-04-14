@@ -60,6 +60,7 @@ struct _ElpeaMainWindowPrivate
 {
 	/* Private members go here */
 	GtkAdjustment *zoom_adjustment;
+	gulong         zoom_changed_handler_id;
 
 	/* Widgets */
 	GtkActionGroup  *action_group;
@@ -110,6 +111,15 @@ _zoom_changed (GObject    *gobject,
 
 	gtk_statusbar_pop (GTK_STATUSBAR (priv->zoom_statusbar), STCXID);
 	gtk_statusbar_push (GTK_STATUSBAR (priv->zoom_statusbar), STCXID, msg);
+
+	double zoom_linear = log (zoom) / log (2.0);
+	//g_signal_stop_emission_by_name (priv->zoom_adjustment, "value-changed");
+	g_signal_handler_block (priv->zoom_adjustment, priv->zoom_changed_handler_id);
+	gtk_adjustment_set_value (priv->zoom_adjustment, zoom_linear);
+	g_signal_handler_unblock (priv->zoom_adjustment, priv->zoom_changed_handler_id);
+
+	static gint i = 0;
+	g_print ("Zoom changed: %d (%lf, %lf)\n", i++, zoom, zoom_linear);
 }
 
 
@@ -468,7 +478,8 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	priv->disposed = FALSE;
 
 	priv->zoom_adjustment = GTK_ADJUSTMENT (gtk_adjustment_new (0.0, -3.0, 3.0, 0.25, 1.0, 0.0));
-	g_signal_connect (G_OBJECT (priv->zoom_adjustment), "value-changed",
+	priv->zoom_changed_handler_id =	g_signal_connect (
+			          G_OBJECT (priv->zoom_adjustment), "value-changed",
 	                  G_CALLBACK (zoom_adjustment_value_changed), self);
 
 	ElpeaDirectory *dir = elpea_directory_new ();
