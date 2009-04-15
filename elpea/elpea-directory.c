@@ -84,6 +84,26 @@ elpea_directory_init (ElpeaDirectory *self)
 
 /* Directory functions */
 
+static void
+load_extensions (void)
+{
+	g_print ("Supported extensions:\n");
+	GSList *formats = gdk_pixbuf_get_formats ();
+	for (;formats; formats = formats->next) {
+		GdkPixbufFormat *format = (GdkPixbufFormat *) formats->data;
+
+		char **exts = gdk_pixbuf_format_get_extensions (format);
+		int i;
+
+		for (i = 0; exts[i]; i++) {
+			g_print (" * %s\n", exts[i]);
+		}
+		
+		g_strfreev (exts);
+	}
+	g_slist_free (formats);
+}
+
 
 gboolean
 file_filter (const gchar *dirname, const gchar *name)
@@ -204,6 +224,9 @@ elpea_directory_load (ElpeaDirectory *self,
                       const gchar *dirname)
 {
 	g_return_if_fail (ELPEA_IS_DIRECTORY (self));
+
+	// FIXME
+	load_extensions ();
 
 	ElpeaDirectoryPrivate *priv = self->priv;
 	GtkListStore *store = GTK_LIST_STORE (self);
