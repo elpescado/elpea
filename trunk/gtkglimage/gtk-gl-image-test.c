@@ -44,8 +44,7 @@ int main (int argc, char *argv[])
 
 	GtkWidget *img = gtk_gl_image_new ();
 	gtk_widget_add_events (img, GDK_BUTTON_PRESS_MASK);
-	gtk_widget_set_size_request (img, 128, 128);
-	gtk_window_set_default_size (GTK_WINDOW (window), 800, 480);
+	gtk_widget_set_size_request (img, 400, 400);
 	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), argv[1]);
 
 	gtk_container_add (GTK_CONTAINER (window), sw);

@@ -29,6 +29,8 @@
 #include "elpea-thumbnail-view.h"
 #include "elpea-thumbnail.h"
 
+#include "ooze-cache.h"
+
 #define N_(a) (a)
 #define _(a) (a)
 
@@ -69,7 +71,9 @@ struct _ElpeaMainWindowPrivate
 	GtkWidget       *zoom_statusbar;
 	GtkWidget       *thumb_view;
 
-	GtkTreeModel *thumbnail_model;
+	GtkTreeModel    *thumbnail_model;
+
+	OozeCache       *pixbuf_cache;
 
 	gboolean disposed;
 };
@@ -137,6 +141,7 @@ _action_open (GtkAction *action,
 						      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 						      GTK_STOCK_OPEN, GTK_RESPONSE_OK,
 						      NULL);
+	gtk_window_set_default_size (GTK_WINDOW (win), 800, 600);
 	int code = gtk_dialog_run (GTK_DIALOG (win));
 	gtk_widget_hide (win);
 
@@ -468,6 +473,14 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 
 }
 
+static void _row_changed                               (GtkTreeModel *tree_model,
+                                                        GtkTreePath  *path,
+                                                        GtkTreeIter  *iter,
+                                                        gpointer      user_data)
+{
+	g_print (" *** Row %s changed\n", gtk_tree_path_to_string (path));
+}
+
 
 static void
 elpea_main_window_init (ElpeaMainWindow *self)
@@ -477,13 +490,16 @@ elpea_main_window_init (ElpeaMainWindow *self)
 
 	priv->disposed = FALSE;
 
+	priv->pixbuf_cache = ooze_cache_new ();
+
 	priv->zoom_adjustment = GTK_ADJUSTMENT (gtk_adjustment_new (0.0, -3.0, 3.0, 0.25, 1.0, 0.0));
 	priv->zoom_changed_handler_id =	g_signal_connect (
 			          G_OBJECT (priv->zoom_adjustment), "value-changed",
 	                  G_CALLBACK (zoom_adjustment_value_changed), self);
 
 	ElpeaDirectory *dir = elpea_directory_new ();
-	elpea_directory_load (dir, "..");
+	g_signal_connect (G_OBJECT (dir), "row-changed", G_CALLBACK (_row_changed), self);
+	elpea_directory_load (dir, ".");
 	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
@@ -533,8 +549,11 @@ static void
 elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path)
 {
 	ElpeaMainWindowPrivate *priv = self->priv;
-	
-	gtk_gl_image_set_from_file (GTK_GL_IMAGE (priv->image), path);
+
+	GdkPixbuf *pix = load_pixbuf (priv->pixbuf_cache, path);
+	gtk_gl_image_set_from_pixbuf (GTK_GL_IMAGE (priv->image), pix);
+	g_object_unref (pix);
+	//gtk_gl_image_set_from_file (GTK_GL_IMAGE (priv->image), path);
 }
 
 
@@ -568,6 +587,7 @@ elpea_main_window_dispose (GObject *object)
 	}
 	priv->disposed = TRUE;
 
+	g_object_unref (priv->pixbuf_cache);
 
 	/* Chain up to the parent class */
 	G_OBJECT_CLASS (elpea_main_window_parent_class)->dispose (object);

@@ -18,6 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include <gtk/gtk.h>
 
 #include "elpea-directory.h"
@@ -37,9 +39,18 @@ struct _ElpeaDirectoryPrivate
 {
 	/* Private members go here */
 
+	GMutex *mutex;
+
+	gint n_items;
+
+
 	gboolean disposed;
 };
 
+typedef struct {
+	ElpeaDirectory *directory;
+	int i;
+} NotifyData;
 
 #define ELPEA_DIRECTORY_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
@@ -65,11 +76,127 @@ elpea_directory_init (ElpeaDirectory *self)
 	GType types[] = { ELPEA_TYPE_THUMBNAIL };
 	gtk_list_store_set_column_types (GTK_LIST_STORE (self), 1, types);
 
+	priv->mutex = g_mutex_new ();
+
 	priv->disposed = FALSE;
 }
 
 
 /* Directory functions */
+
+
+gboolean
+file_filter (const gchar *dirname, const gchar *name)
+{
+	/* Discard hidden files */
+	if (name[0] == '.')
+		return FALSE;
+
+	/* Accept only regular files and symlinks to regular files */
+	char *path = g_build_filename (dirname, name, NULL);
+	if (! g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
+		g_free (path);
+		return FALSE;
+	}
+	g_free (path);
+
+	/* Check extensions */
+	if (strstr (name, ".jpg") == NULL) // FIXME
+		return FALSE;
+
+	return TRUE;
+}
+
+static int
+elpea_directory_get_n_items (ElpeaDirectory *self)
+{
+	ElpeaDirectoryPrivate *priv = self->priv;
+
+	g_mutex_lock (priv->mutex);
+	int i = priv->n_items;
+	g_mutex_unlock (priv->mutex);
+	return i;
+}
+
+/* Thread loader - very dirty */
+
+static gboolean
+_thumbnailer_notify (gpointer user_data)
+{
+	NotifyData *data = user_data;
+	g_print ("_thumbnailer_notify (%d)\n", data->i);
+
+	ElpeaDirectory *self = ELPEA_DIRECTORY (data->directory);
+	GtkTreePath *path = gtk_tree_path_new_from_indices (data->i, -1);
+
+	GtkTreeIter iter;
+
+	if (! gtk_tree_model_get_iter (GTK_TREE_MODEL (self), &iter, path)) {
+		g_print ("gtk_tree_model_get_iter failed:-/\n");
+		return FALSE;
+	}
+
+	ElpeaThumbnail *thumb;
+	gtk_tree_model_get (GTK_TREE_MODEL (self), &iter, 0, &thumb, -1);
+	gtk_list_store_set (GTK_LIST_STORE (self), &iter, 0, thumb, -1);
+
+//	gtk_tree_model_row_changed (GTK_TREE_MODEL (self), &iter, path);
+
+	return FALSE;
+}
+
+
+static gpointer
+_t_thumbnailer_thread (gpointer user_data)
+{
+	ElpeaDirectory *self = ELPEA_DIRECTORY (user_data);
+	ElpeaDirectoryPrivate *priv = self->priv;
+	GtkListStore *store = GTK_LIST_STORE (self);
+
+	int n_items = elpea_directory_get_n_items (self);
+	int i;
+	
+	for (i = 0; i < n_items; i++) {
+		/* TODO: Try to use iterators. It will probably fail,
+		 * as iterators are immutable, but it may be worth trying */
+		GtkTreePath *path = gtk_tree_path_new_from_indices (i, -1);
+
+		GtkTreeIter iter;
+		ElpeaThumbnail *thumb;
+
+		gtk_tree_model_get_iter (GTK_TREE_MODEL (self), &iter, path);
+		gtk_tree_model_get (GTK_TREE_MODEL (self), &iter, 0, &thumb, -1);
+
+		/* Load thumbnail */
+		elpea_thumbnail_load (thumb);
+
+		/* Post a notify */
+		NotifyData *notify_data = g_new (NotifyData, 1);
+		notify_data->directory = self;
+		notify_data->i = i;
+		g_timeout_add_full (G_PRIORITY_DEFAULT, 1,
+		                    _thumbnailer_notify,
+							notify_data,
+							g_free);
+
+
+		gtk_tree_path_free (path);
+		g_usleep (1000*1000);
+	}
+}
+
+
+static void
+start_thumbnailer_thread (ElpeaDirectory *self)
+{
+	ElpeaDirectoryPrivate *priv = self->priv;
+	GtkListStore *store = GTK_LIST_STORE (self);
+
+	GThread *thread = g_thread_create (_t_thumbnailer_thread,
+	                                   self,
+									   FALSE,
+									   NULL);
+}
 
 
 void
@@ -78,7 +205,7 @@ elpea_directory_load (ElpeaDirectory *self,
 {
 	g_return_if_fail (ELPEA_IS_DIRECTORY (self));
 
-
+	ElpeaDirectoryPrivate *priv = self->priv;
 	GtkListStore *store = GTK_LIST_STORE (self);
 	gtk_list_store_clear (store);
 
@@ -86,8 +213,12 @@ elpea_directory_load (ElpeaDirectory *self,
 	if (dir == NULL)
 		return;
 
+	gint n = 0;
+
 	const gchar *file;
 	while ((file = g_dir_read_name (dir))) {
+		if (! file_filter (dirname, file))
+				continue;
 		g_print ("Trying to load %s... ", file);
 		
 		ElpeaThumbnail *thumb = elpea_thumbnail_new (dirname, file);
@@ -96,11 +227,15 @@ elpea_directory_load (ElpeaDirectory *self,
 			gtk_list_store_append (store, &iter);
 			gtk_list_store_set (store, &iter, 0, thumb, -1);
 			g_print ("ok\n");
+			n++;
 		} else {
 			g_print ("failed\n");
 		}
 	}
 	g_dir_close (dir);
+	priv->n_items = n;
+
+	start_thumbnailer_thread (self);
 }
 
 

@@ -84,6 +84,9 @@ GdkPixbuf *
 elpea_thumbnail_get_pixbuf (ElpeaThumbnail *self);
 
 
+void
+elpea_thumbnail_load (ElpeaThumbnail *self);
+
 G_END_DECLS
 
 #endif

@@ -74,6 +74,8 @@ struct _GtkGlImagePrivate
 	/* Scrolling */
 	GtkAdjustment *hadjustment;
 	GtkAdjustment *vadjustment;
+	gulong         hadj_id;
+	gulong         vadj_id;
 
 	gboolean disposed;
 };
@@ -300,14 +302,16 @@ render (GtkGlImage *self)
 	GLfloat hscale = scale * priv->ratio;
 
 	/* Compute translation vector for scrolling */
-//	GLfloat ax = gtk_adjustment_get_value (priv->hadjustment) * -0.01;
+
+	//TODO: sort this out!
 	GLfloat ax = (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * -4 * priv->zoom;
 	GLfloat ay = (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * 4 * priv->zoom;
 
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-//	glTranslatef (ax, ay, 0.0f);
+	// TODO: uncomment below line
+	//glTranslatef (ax, ay, 0.0f);
 	glPushMatrix ();	
 		//glTranslatef (ax, ay, -8.0f/priv->zoom);
 		glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
@@ -512,7 +516,7 @@ gtk_gl_image_rotate_right (GtkGlImage *self)
 gint
 gtk_gl_image_get_rotation (GtkGlImage *self)
 {
-	g_return_if_fail (self != NULL);
+	g_return_val_if_fail (self != NULL, 0);
 
 	GtkGlImagePrivate *priv = self->priv;
 	return priv->rotation;
@@ -688,7 +692,7 @@ static float
 calculate_scrollbar_position (GtkAdjustment *adj)
 {
 	if (adj == NULL)
-		return 0.0f;
+		return 0.5f;
 
 	gdouble lower = gtk_adjustment_get_lower (adj);
 	gdouble value = gtk_adjustment_get_value (adj);
@@ -726,6 +730,12 @@ update_adjustments (GtkGlImage *self)
 
 	if (priv->pixbuf == NULL)
 		return;
+
+	if (priv->hadjustment == NULL)
+		return;
+
+	if (priv->vadjustment == NULL)
+		return;
 	
 	GtkAllocation *a = &(widget->allocation);
 	gfloat ww = a->width;
@@ -759,16 +769,32 @@ gtk_gl_image_set_scroll_adjustments (GtkGlImage *self,
 {
 	GtkGlImagePrivate *priv = self->priv;
 
-	g_print ("gtk_gl_image_set_scroll_adjustments (%p, %p\n",
+	g_print ("gtk_gl_image_set_scroll_adjustments (%p, %p)\n",
 			 hadjustment, vadjustment);
 
-	priv->hadjustment = hadjustment;
-	priv->vadjustment = vadjustment;
+	if (priv->hadjustment) {
+		g_signal_handler_disconnect (priv->hadjustment, priv->hadj_id);
+		g_object_unref (priv->hadjustment);
+	}
 
-	g_signal_connect (G_OBJECT (hadjustment), "value-changed",
-	                  G_CALLBACK (adjustments_changed), self);
-	g_signal_connect (G_OBJECT (vadjustment), "value-changed",
-	                  G_CALLBACK (adjustments_changed), self);
+	if (priv->vadjustment) {
+		g_signal_handler_disconnect (priv->vadjustment, priv->vadj_id);
+		g_object_unref (priv->vadjustment);
+	}
+
+
+	priv->hadjustment = hadjustment ? g_object_ref (hadjustment) : NULL;
+	priv->vadjustment = vadjustment ? g_object_ref (vadjustment) : NULL;
+
+	if (hadjustment) {
+		priv->hadj_id = g_signal_connect (G_OBJECT (hadjustment), "value-changed",
+		                                  G_CALLBACK (adjustments_changed), self);
+	}
+
+	if (vadjustment) {
+		priv->vadj_id = g_signal_connect (G_OBJECT (vadjustment), "value-changed",
+		                                  G_CALLBACK (adjustments_changed), self);
+	}
 }
 
 
