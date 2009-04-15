@@ -58,26 +58,57 @@ elpea_thumbnail_new (const gchar *dirname, const gchar *file)
 {
 	/* Elpea */
 	char *path = g_build_filename (dirname, file, NULL);
+	/*
 	GdkPixbuf *pix = gdk_pixbuf_new_from_file (path, NULL);
 	if (pix == NULL) {
 		g_free (path);
 		return NULL;
 	}
+	*/
 
 	/* GObject */
 	ElpeaThumbnail *self = g_object_new (ELPEA_TYPE_THUMBNAIL, NULL);
 	ElpeaThumbnailPrivate *priv = self->priv;
 
+	
+	priv->thumbnail = NULL;
+	priv->name   = g_strdup (file);
+	priv->path   = path;
+	priv->width  = 0;
+	priv->height = 0;
+	priv->size   = 0;
+
+
+/*	
 	priv->thumbnail = elpea_thumbnail_scale (pix);
 	priv->name   = g_strdup (file);
 	priv->path   = path;
 	priv->width  = gdk_pixbuf_get_width (pix);
 	priv->height = gdk_pixbuf_get_height (pix);
 	priv->size   = get_file_size (path);
+*/
 
-	g_object_unref (G_OBJECT (pix));
+//	g_object_unref (G_OBJECT (pix));
+//
+	//elpea_thumbnail_load (self);	
 
 	return self;
+}
+
+
+void
+elpea_thumbnail_load (ElpeaThumbnail *self)
+{
+	ElpeaThumbnailPrivate *priv = self->priv;
+
+	g_print ("elpea_thumbnail_load (%s)... ", priv->path);
+	GdkPixbuf *pix = gdk_pixbuf_new_from_file (priv->path, NULL);	// TODO: OozeCache
+	g_print ("ok\n");
+
+	priv->thumbnail = elpea_thumbnail_scale (pix);
+	priv->width  = gdk_pixbuf_get_width (pix);
+	priv->height = gdk_pixbuf_get_height (pix);
+	priv->size   = get_file_size (priv->path);
 }
 
 
@@ -198,7 +229,7 @@ GdkPixbuf *
 elpea_thumbnail_get_pixbuf (ElpeaThumbnail *self)
 {
 	ElpeaThumbnailPrivate *priv = self->priv;
-	return g_object_ref (priv->thumbnail);
+	return priv->thumbnail ? g_object_ref (priv->thumbnail) : NULL;
 }
 
 

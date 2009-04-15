@@ -1,5 +1,5 @@
-CFLAGS=-Wall `pkg-config --cflags gtk+-2.0 gtkglext-1.0` -g -I../gtkglimage
-LDFLAGS=-Wall `pkg-config --libs gtk+-2.0 gtkglext-1.0` -lm -g
+CFLAGS=-Wall `pkg-config --cflags gtk+-2.0 gtkglext-1.0 gthread-2.0` -g -I../gtkglimage -I../libooze
+LDFLAGS=-Wall `pkg-config --libs gtk+-2.0 gtkglext-1.0 gthread-2.0` -lm -g
 
 OBJECTS=\
 	elpea-directory.o \
@@ -10,7 +10,8 @@ OBJECTS=\
 	main.o \
 	utils.o \
 	../gtkglimage/marshallers.o \
-	../gtkglimage/gtk-gl-image.o
+	../gtkglimage/gtk-gl-image.o \
+	../libooze/ooze-cache.o
 
 all: elpea
 

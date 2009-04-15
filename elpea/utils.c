@@ -12,3 +12,21 @@ gsize get_file_size (const char *path)
 }
 
 
+
+GdkPixbuf *
+load_pixbuf (OozeCache *cache, const gchar *path)
+{
+	if (cache == NULL)
+		return gdk_pixbuf_new_from_file (path, NULL);
+
+	GdkPixbuf *pix = (GdkPixbuf *) ooze_cache_get (cache, path);
+	if (pix == NULL) {
+		pix = gdk_pixbuf_new_from_file (path, NULL);
+		if (pix)
+			ooze_cache_add (cache, path, G_OBJECT (pix), 1);
+	} else {
+		g_print ("Pixbuf '%s' loaded from cache;-)\n", path);
+	}
+	return pix;
+}
+

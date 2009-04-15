@@ -8,6 +8,7 @@
 
 int main (int argc, char *argv[])
 {
+	g_thread_init (NULL);
 	gtk_init (&argc, &argv);
 	gtk_gl_init (&argc, &argv);
 
