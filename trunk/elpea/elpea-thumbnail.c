@@ -109,6 +109,8 @@ elpea_thumbnail_load (ElpeaThumbnail *self)
 	priv->width  = gdk_pixbuf_get_width (pix);
 	priv->height = gdk_pixbuf_get_height (pix);
 	priv->size   = get_file_size (priv->path);
+
+	g_object_unref (pix);
 }
 
 
