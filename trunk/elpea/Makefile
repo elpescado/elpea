@@ -10,6 +10,7 @@ OBJECTS=\
 	main.o \
 	utils.o \
 	../gtkglimage/marshallers.o \
+	../gtkglimage/compat.o \
 	../gtkglimage/gtk-gl-image.o \
 	../libooze/ooze-cache.o
 

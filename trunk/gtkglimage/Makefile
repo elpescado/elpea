@@ -11,7 +11,7 @@ marshallers.h: marshallers.list
 
 marshallers.o: marshallers.c marshallers.h
 
-gtk-gl-image-test: gtk-gl-image-test.o gtk-gl-image.o marshallers.o
+gtk-gl-image-test: compat.o gtk-gl-image-test.o gtk-gl-image.o marshallers.o
 
 clean:
 	rm -rf *.o gtk-gl-image-test
