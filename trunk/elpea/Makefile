@@ -12,7 +12,8 @@ OBJECTS=\
 	../gtkglimage/marshallers.o \
 	../gtkglimage/compat.o \
 	../gtkglimage/gtk-gl-image.o \
-	../libooze/ooze-cache.o
+	../libooze/ooze-cache.o \
+	../libooze/ooze-stree.o
 
 all: elpea
 

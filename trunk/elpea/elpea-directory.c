@@ -25,6 +25,8 @@
 #include "elpea-directory.h"
 #include "elpea-thumbnail.h"
 
+#include "ooze-stree.h"
+
 static void
 elpea_directory_tree_model_iface_init (GtkTreeModelIface *iface);
 
@@ -52,11 +54,18 @@ typedef struct {
 	int i;
 } NotifyData;
 
+
+
 #define ELPEA_DIRECTORY_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
 	ELPEA_TYPE_DIRECTORY, ElpeaDirectoryPrivate))
 
 #define N_COLUMNS 2
+
+
+
+static OozeSTree *extensions;
+
 
 ElpeaDirectory*
 elpea_directory_new (void)
@@ -87,6 +96,8 @@ elpea_directory_init (ElpeaDirectory *self)
 static void
 load_extensions (void)
 {
+	extensions = ooze_stree_new ();
+
 	g_print ("Supported extensions:\n");
 	GSList *formats = gdk_pixbuf_get_formats ();
 	for (;formats; formats = formats->next) {
@@ -96,7 +107,14 @@ load_extensions (void)
 		int i;
 
 		for (i = 0; exts[i]; i++) {
-			g_print (" * %s\n", exts[i]);
+			char extbuf[32];
+			strncpy (extbuf+1, exts[i], 30);
+			extbuf[0] = '.';
+			extbuf[31] = '\0';
+
+			ooze_stree_add (extensions, extbuf, -1);
+			g_print (" * %s\n", extbuf);
+			//g_print (" * %s\n", exts[i]);
 		}
 		
 		g_strfreev (exts);
@@ -121,10 +139,13 @@ file_filter (const gchar *dirname, const gchar *name)
 	g_free (path);
 
 	/* Check extensions */
+	/*
 	if (strstr (name, ".jpg") == NULL) // FIXME
 		return FALSE;
-
-	return TRUE;
+	*/
+	return ooze_stree_ends_with (extensions, name, -1);
+	
+//	return TRUE;
 }
 
 static int
