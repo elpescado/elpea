@@ -36,6 +36,8 @@ G_BEGIN_DECLS
 
 typedef struct {
 	int fufu;
+	gpointer root;
+	gpointer success;
 } OozeSTree;
 
 
