@@ -499,7 +499,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 
 	ElpeaDirectory *dir = elpea_directory_new ();
 	g_signal_connect (G_OBJECT (dir), "row-changed", G_CALLBACK (_row_changed), self);
-	elpea_directory_load (dir, ".");
+	elpea_directory_load (dir, "/home/przemek/pliki/pix");
 	priv->thumbnail_model = dir;
 
 	elpea_main_window_init_gui (self);
