@@ -77,6 +77,9 @@ struct _GtkGlImagePrivate
 	gulong         hadj_id;
 	gulong         vadj_id;
 
+	gfloat         scroll_x;
+	gfloat         scroll_y;
+
 	gboolean disposed;
 };
 
@@ -108,7 +111,9 @@ gtk_gl_image_calculate_zoom_fit (GtkGlImage *self)
 	double rx = (double)widget->allocation.width / (double)gdk_pixbuf_get_width (priv->pixbuf);
 	double ry = (double)widget->allocation.height / (double)gdk_pixbuf_get_height (priv->pixbuf);
 
-	return MIN(MIN(rx,ry)*0.9,1.0);
+	g_printerr ("rx = %lf, ry = %lf ", rx, ry);
+
+	return MAX(MIN(rx,ry)*0.9,1.0);
 }
 
 
@@ -147,6 +152,9 @@ gtk_gl_image_init (GtkGlImage *self)
 
 	priv->animations = FALSE;
 	priv->reflection = TRUE;
+
+	priv->scroll_x = 0.5f;
+	priv->scroll_y = 0.5f;
 
 	priv->disposed = FALSE;
 }
@@ -311,7 +319,7 @@ render (GtkGlImage *self)
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// TODO: uncomment below line
-	//glTranslatef (ax, ay, 0.0f);
+	glTranslatef (ax, ay, 0.0f);
 	glPushMatrix ();	
 		//glTranslatef (ax, ay, -8.0f/priv->zoom);
 		glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
@@ -451,12 +459,14 @@ gtk_gl_image_zoom_out (GtkGlImage *self)
 void
 gtk_gl_image_zoom_fit (GtkGlImage *self)
 {
+	g_printerr ("gtk_gl_image_zoom_fit ");
 	GtkGlImagePrivate *priv = self->priv;
 
 	if (priv->pixbuf == NULL)
 		return;
 
 	gdouble new_zoom = gtk_gl_image_calculate_zoom_fit (self);
+	g_printerr ("(%lf)\n", new_zoom);
 	gtk_gl_image_set_zoom (self, new_zoom);
 }
 
@@ -755,6 +765,10 @@ update_adjustments (GtkGlImage *self)
 
 	gtk_adjustment_set_upper (priv->hadjustment, cw);
 	gtk_adjustment_set_upper (priv->vadjustment, ch);
+
+	gtk_adjustment_set_value (priv->hadjustment, (cw-ww) * priv->scroll_x);
+	gtk_adjustment_set_value (priv->vadjustment, (ch-wh) * priv->scroll_y);
+	g_print ("(%f, %f)\n", (float) cw * priv->scroll_x, (float) priv->scroll_y);
 	
 	g_object_thaw_notify (G_OBJECT (priv->hadjustment));
 	g_object_thaw_notify (G_OBJECT (priv->vadjustment));
