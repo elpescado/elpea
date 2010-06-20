@@ -111,8 +111,6 @@ gtk_gl_image_calculate_zoom_fit (GtkGlImage *self)
 	double rx = (double)widget->allocation.width / (double)gdk_pixbuf_get_width (priv->pixbuf);
 	double ry = (double)widget->allocation.height / (double)gdk_pixbuf_get_height (priv->pixbuf);
 
-	g_printerr ("rx = %lf, ry = %lf ", rx, ry);
-
 	return MAX(MIN(rx,ry)*0.9,1.0);
 }
 
@@ -459,14 +457,12 @@ gtk_gl_image_zoom_out (GtkGlImage *self)
 void
 gtk_gl_image_zoom_fit (GtkGlImage *self)
 {
-	g_printerr ("gtk_gl_image_zoom_fit ");
 	GtkGlImagePrivate *priv = self->priv;
 
 	if (priv->pixbuf == NULL)
 		return;
 
 	gdouble new_zoom = gtk_gl_image_calculate_zoom_fit (self);
-	g_printerr ("(%lf)\n", new_zoom);
 	gtk_gl_image_set_zoom (self, new_zoom);
 }
 
