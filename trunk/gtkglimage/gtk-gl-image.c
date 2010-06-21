@@ -149,7 +149,7 @@ gtk_gl_image_init (GtkGlImage *self)
 	priv->auto_fit = TRUE;
 
 	priv->animations = FALSE;
-	priv->reflection = TRUE;
+	priv->reflection = FALSE;
 
 	priv->scroll_x = 0.5f;
 	priv->scroll_y = 0.5f;
@@ -301,26 +301,33 @@ render (GtkGlImage *self)
 	/*
 	 * (scale == 1.0 && zoom == 1.0) => (img.height == this.height / 8)
 	 */
-	double img_h = gdk_pixbuf_get_height (priv->pixbuf);
-	double win_h = widget->allocation.height;
+	GLfloat pw = gdk_pixbuf_get_width (priv->pixbuf);  // picture width
+	GLfloat ph = gdk_pixbuf_get_height (priv->pixbuf); // picture height
+	GLfloat sw = widget->allocation.width;             // viewport width
+	GLfloat sh = widget->allocation.height;            // viewport height
 
-	GLfloat scale = img_h * 8.0 / win_h;
-	GLfloat hscale = scale * priv->ratio;
+	GLfloat z = priv->zoom;
+	GLfloat a = sw/sh;
+	GLfloat b = pw/sh * z;
+	GLfloat c = ph/sh * z;
 
 	/* Compute translation vector for scrolling */
 
 	//TODO: sort this out!
-	GLfloat ax = (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * -4 * priv->zoom;
-	GLfloat ay = (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * 4 * priv->zoom;
+//	GLfloat ax = (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * -4 * priv->zoom;
+//	GLfloat ay = (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * 4 * priv->zoom;
+
+//	g_printerr ("render scale=%f hscale=%f ax=%f ay=%f\n",
+//	            (float)scale, (float)hscale, (float)ax, (float)ay);
 
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// TODO: uncomment below line
-	glTranslatef (ax, ay, 0.0f);
+	//glTranslatef (ax, ay, 0.0f);
 	glPushMatrix ();	
 		//glTranslatef (ax, ay, -8.0f/priv->zoom);
-		glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
+//		glTranslatef (0.0f, 0.0f, -8.0f/priv->zoom);
 
 		/* Draw object */
 		glPushMatrix ();
@@ -329,16 +336,16 @@ render (GtkGlImage *self)
 			glBindTexture (GL_TEXTURE_2D, priv->tex_id);
 			glBegin (GL_QUADS);
 				glColor3f (1.0f, 1.0f, 1.0f);
-				glTexCoord2i (1, 1);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
-				glTexCoord2i (0, 1);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
-				glTexCoord2i (0, 0);	glVertex3f (-1.0f*hscale,  1.0f*scale, 0.0f);
-				glTexCoord2i (1, 0);	glVertex3f ( 1.0f*hscale,  1.0f*scale, 0.0f);
+				glTexCoord2i (1, 1);	glVertex3f ( 1.0f*b, -1.0f*c, -1.0f);
+				glTexCoord2i (0, 1);	glVertex3f (-1.0f*b, -1.0f*c, -1.0f);
+				glTexCoord2i (0, 0);	glVertex3f (-1.0f*b,  1.0f*c, -1.0f);
+				glTexCoord2i (1, 0);	glVertex3f ( 1.0f*b,  1.0f*c, -1.0f);
 			glEnd ();
 		glPopMatrix ();
 
 
 		/* Draw reflection */
-
+/*
 		if (priv->reflection) {
 			glEnable (GL_BLEND);
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -355,7 +362,16 @@ render (GtkGlImage *self)
 				glEnd ();
 			glPopMatrix ();
 		}
+*/
 	glPopMatrix ();
+
+	glBegin (GL_QUADS);
+		glColor4f (1.0f, 1.0f, 1.0f, 0.5f);
+		glVertex3f ( 1.0f, -1.0f, -1.0f);
+		glVertex3f (-1.0f, -1.0f, -1.0f);
+		glVertex3f (-1.0f,  1.0f, -1.0f);
+		glVertex3f ( 1.0f,  1.0f, -1.0f);
+	glEnd ();
 }
 
 
