@@ -422,12 +422,18 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 
 
 	/* Image preview */
+	GtkWidget *sw2 = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw2), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw2), GTK_SHADOW_IN);
+	gtk_paned_add2 (GTK_PANED (paned), sw2);
+	gtk_widget_show (sw2);
+
 	GtkWidget *img = gtk_gl_image_new ();
 	gtk_gl_image_set_from_file (GTK_GL_IMAGE (img), "../data/elpea-logo.png");
 	gtk_widget_add_events (img, GDK_BUTTON_PRESS_MASK);
 	g_signal_connect (G_OBJECT (img), "notify::zoom",		// TODO: check if this makes UI laggy
 	                  G_CALLBACK (_zoom_changed), self);
-	gtk_paned_add2 (GTK_PANED (paned), img);
+	gtk_container_add (GTK_CONTAINER (sw2), img);
 	gtk_widget_show (img);
 	priv->image = GTK_GL_IMAGE (img);
 
