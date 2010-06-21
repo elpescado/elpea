@@ -218,7 +218,7 @@ _action_zoom  (GtkAction *action,
 	else if (strcmp (name, "Zoom1") == 0)
 		gtk_gl_image_set_zoom (img, 1.0);
 	else if (strcmp (name, "ZoomFit") == 0)
-		gtk_gl_image_zoom_fit (img);
+		gtk_gl_image_zoom_fit (img, TRUE);
 	else 
 		g_print ("Invalid action: '%s'\n", name);
 }
@@ -423,7 +423,7 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 
 	/* Image preview */
 	GtkWidget *sw2 = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw2), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw2), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw2), GTK_SHADOW_IN);
 	gtk_paned_add2 (GTK_PANED (paned), sw2);
 	gtk_widget_show (sw2);

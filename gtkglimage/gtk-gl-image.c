@@ -97,7 +97,7 @@ calculate_scrollbar_position (GtkAdjustment *adj);
 
 
 static gdouble
-gtk_gl_image_calculate_zoom_fit (GtkGlImage *self)
+gtk_gl_image_calculate_zoom_fit (GtkGlImage *self, gboolean stretch)
 {
 	GtkGlImagePrivate *priv = self->priv;
 	GtkWidget *widget = GTK_WIDGET (self);
@@ -111,7 +111,8 @@ gtk_gl_image_calculate_zoom_fit (GtkGlImage *self)
 	double rx = (double)widget->allocation.width / (double)gdk_pixbuf_get_width (priv->pixbuf);
 	double ry = (double)widget->allocation.height / (double)gdk_pixbuf_get_height (priv->pixbuf);
 
-	return MAX(MIN(rx,ry)*0.9,1.0);
+	double zoom = MIN(rx,ry)*0.9;
+	return stretch ? zoom : MIN (zoom, 1.0);
 }
 
 
@@ -373,7 +374,7 @@ render (GtkGlImage *self)
 		}
 */
 	glPopMatrix ();
-
+/*
 	glBegin (GL_QUADS);
 		glColor4f (1.0f, 1.0f, 1.0f, 0.5f);
 		glVertex3f ( 1.0f, -1.0f, -1.0f);
@@ -381,6 +382,7 @@ render (GtkGlImage *self)
 		glVertex3f (-1.0f,  1.0f, -1.0f);
 		glVertex3f ( 1.0f,  1.0f, -1.0f);
 	glEnd ();
+*/
 }
 
 
@@ -392,6 +394,10 @@ gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
 {
 	//g_print ("gtk_gl_image_set_from_pixbuf\n");
 	GtkGlImagePrivate *priv = self->priv;
+
+	if (priv->pixbuf) {
+		g_object_unref (priv->pixbuf);
+	}
 
 	priv->pixbuf = g_object_ref (pixbuf);
 	priv->tex_id = 0;
@@ -408,7 +414,7 @@ gtk_gl_image_set_from_pixbuf (GtkGlImage *self,
 	g_object_freeze_notify (G_OBJECT (self));
 
 	if (priv->auto_fit) {
-		priv->zoom = gtk_gl_image_calculate_zoom_fit (self);
+		priv->zoom = gtk_gl_image_calculate_zoom_fit (self, FALSE);
 		g_object_notify (G_OBJECT (self), "zoom");
 	}
 
@@ -434,7 +440,8 @@ gtk_gl_image_set_from_file (GtkGlImage *self,
 GdkPixbuf *
 gtk_gl_image_get_pixbuf (GtkGlImage *image)
 {
-	return NULL;
+	GtkGlImagePrivate *priv = image->priv;
+	return g_object_ref (priv->pixbuf);
 }
 
 
@@ -480,14 +487,14 @@ gtk_gl_image_zoom_out (GtkGlImage *self)
 
 
 void
-gtk_gl_image_zoom_fit (GtkGlImage *self)
+gtk_gl_image_zoom_fit (GtkGlImage *self, gboolean stretch)
 {
 	GtkGlImagePrivate *priv = self->priv;
 
 	if (priv->pixbuf == NULL)
 		return;
 
-	gdouble new_zoom = gtk_gl_image_calculate_zoom_fit (self);
+	gdouble new_zoom = gtk_gl_image_calculate_zoom_fit (self, stretch);
 	gtk_gl_image_set_zoom (self, new_zoom);
 }
 

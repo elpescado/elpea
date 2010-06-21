@@ -107,7 +107,7 @@ void
 gtk_gl_image_zoom_out (GtkGlImage *self);
 
 void
-gtk_gl_image_zoom_fit (GtkGlImage *self);
+gtk_gl_image_zoom_fit (GtkGlImage *self, gboolean stretch);
 
 gfloat
 gtk_gl_image_get_zoom (GtkGlImage *self);
