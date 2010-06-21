@@ -312,6 +312,9 @@ render (GtkGlImage *self)
 	GLfloat c = ph/sh * z;
 
 	/* Compute translation vector for scrolling */
+	/* TODO: center image when not filling wiewport */
+	GLfloat tx = -2.0f * (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * (b-a);
+	GLfloat ty = +2.0f * (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * (c-1);
 
 	//TODO: sort this out!
 //	GLfloat ax = (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * -4 * priv->zoom;
@@ -336,10 +339,10 @@ render (GtkGlImage *self)
 			glBindTexture (GL_TEXTURE_2D, priv->tex_id);
 			glBegin (GL_QUADS);
 				glColor3f (1.0f, 1.0f, 1.0f);
-				glTexCoord2i (1, 1);	glVertex3f ( 1.0f*b, -1.0f*c, -1.0f);
-				glTexCoord2i (0, 1);	glVertex3f (-1.0f*b, -1.0f*c, -1.0f);
-				glTexCoord2i (0, 0);	glVertex3f (-1.0f*b,  1.0f*c, -1.0f);
-				glTexCoord2i (1, 0);	glVertex3f ( 1.0f*b,  1.0f*c, -1.0f);
+				glTexCoord2i (1, 1);	glVertex3f ( 1.0f*b + tx, -1.0f*c + ty, -1.0f);
+				glTexCoord2i (0, 1);	glVertex3f (-1.0f*b + tx, -1.0f*c + ty, -1.0f);
+				glTexCoord2i (0, 0);	glVertex3f (-1.0f*b + tx,  1.0f*c + ty, -1.0f);
+				glTexCoord2i (1, 0);	glVertex3f ( 1.0f*b + tx,  1.0f*c + ty, -1.0f);
 			glEnd ();
 		glPopMatrix ();
 
