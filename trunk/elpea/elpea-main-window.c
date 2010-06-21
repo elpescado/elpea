@@ -30,6 +30,7 @@
 #include "elpea-thumbnail.h"
 
 #include "ooze-cache.h"
+#include "foo-prefs.h"
 
 #define N_(a) (a)
 #define _(a) (a)
@@ -209,6 +210,7 @@ _action_zoom  (GtkAction *action,
 	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
 	ElpeaMainWindowPrivate *priv = self->priv;
 	GtkGlImage *img = GTK_GL_IMAGE (priv->image);
+	extern FooPrefs *prefs;
 
 	const gchar *name = gtk_action_get_name (action);
 	if (strcmp (name, "ZoomIn") == 0)
@@ -218,7 +220,7 @@ _action_zoom  (GtkAction *action,
 	else if (strcmp (name, "Zoom1") == 0)
 		gtk_gl_image_set_zoom (img, 1.0);
 	else if (strcmp (name, "ZoomFit") == 0)
-		gtk_gl_image_zoom_fit (img, FALSE);
+		gtk_gl_image_zoom_fit (img, foo_prefs_get_bool (prefs, "zoom_fit_stretch", FALSE));
 	else 
 		g_print ("Invalid action: '%s'\n", name);
 }
