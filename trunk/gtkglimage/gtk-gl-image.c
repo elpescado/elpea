@@ -313,8 +313,14 @@ render (GtkGlImage *self)
 
 	/* Compute translation vector for scrolling */
 	/* TODO: center image when not filling wiewport */
-	GLfloat tx = -2.0f * (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * (b-a);
-	GLfloat ty = +2.0f * (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * (c-1);
+	GLfloat tx = 0.0f;
+	GLfloat ty = 0.0f;
+
+	if (b > a)
+		tx = -2.0f * (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * (b-a);
+
+	if (c > 1)
+		ty = +2.0f * (calculate_scrollbar_position (priv->vadjustment) - 0.5f) * (c-1);
 
 	//TODO: sort this out!
 //	GLfloat ax = (calculate_scrollbar_position (priv->hadjustment) - 0.5f) * -4 * priv->zoom;
