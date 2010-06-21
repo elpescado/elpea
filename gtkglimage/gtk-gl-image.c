@@ -150,7 +150,7 @@ gtk_gl_image_init (GtkGlImage *self)
 	priv->auto_fit = TRUE;
 
 	priv->animations = FALSE;
-	priv->reflection = FALSE;
+	priv->reflection = TRUE;
 
 	priv->scroll_x = 0.5f;
 	priv->scroll_y = 0.5f;
@@ -351,28 +351,30 @@ render (GtkGlImage *self)
 				glTexCoord2i (0, 0);	glVertex3f (-1.0f*b + tx,  1.0f*c + ty, -1.0f);
 				glTexCoord2i (1, 0);	glVertex3f ( 1.0f*b + tx,  1.0f*c + ty, -1.0f);
 			glEnd ();
+
 		glPopMatrix ();
 
 
 		/* Draw reflection */
-/*
+
 		if (priv->reflection) {
+			g_printerr ("Drawing reflection\n");
 			glEnable (GL_BLEND);
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			glPushMatrix ();
-				glTranslatef (0.0f, -1.1f*scale, 0.0f);
+				glTranslatef (0.0f, -2.1f * c, 0.0f);
 				glBegin (GL_QUADS);
 					glColor4f (1.0f, 1.0f, 1.0f, 0.0f);
-					glTexCoord2f (1.0f, 0.5f);	glVertex3f ( 1.0f*hscale, -1.0f*scale, 0.0f);
-					glTexCoord2f (0.0f, 0.5f);	glVertex3f (-1.0f*hscale, -1.0f*scale, 0.0f);
+					glTexCoord2f (1.0f, 0.5f);	glVertex3f ( 1.0f*b + tx, -0.25f*c + ty, -1.0f);
+					glTexCoord2f (0.0f, 0.5f);	glVertex3f (-1.0f*b + tx, -0.25f*c + ty, -1.0f);
 					glColor4f (1.0f, 1.0f, 1.0f, 0.3f);
-					glTexCoord2f (0.0f, 1.f);	glVertex3f (-1.0f*hscale,  .0f*scale, 0.0f);
-					glTexCoord2f (1.0f, 1.f);	glVertex3f ( 1.0f*hscale,  .0f*scale, 0.0f);
+					glTexCoord2f (0.0f, 1.f);	glVertex3f (-1.0f*b + tx,  1.0f*c + ty, -1.0f);
+					glTexCoord2f (1.0f, 1.f);	glVertex3f ( 1.0f*b + tx,  1.0f*c + ty, -1.0f);
 				glEnd ();
 			glPopMatrix ();
 		}
-*/
+
 	glPopMatrix ();
 /*
 	glBegin (GL_QUADS);

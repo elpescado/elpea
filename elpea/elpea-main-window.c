@@ -218,7 +218,7 @@ _action_zoom  (GtkAction *action,
 	else if (strcmp (name, "Zoom1") == 0)
 		gtk_gl_image_set_zoom (img, 1.0);
 	else if (strcmp (name, "ZoomFit") == 0)
-		gtk_gl_image_zoom_fit (img, TRUE);
+		gtk_gl_image_zoom_fit (img, FALSE);
 	else 
 		g_print ("Invalid action: '%s'\n", name);
 }
