@@ -1,5 +1,6 @@
-CFLAGS=-Wall `pkg-config --cflags gtk+-2.0 gtkglext-1.0 gthread-2.0 gconf-2.0` -g -I../gtkglimage -I../libooze
-LDFLAGS=-Wall `pkg-config --libs gtk+-2.0 gtkglext-1.0 gthread-2.0 gconf-2.0` -lm -g
+include ../Makefile.inc
+CFLAGS=-Wall -g $(UC_CFLAGS) -I../gtkglimage -I../libooze
+LDFLAGS=-Wall -g $(UC_LDFLAGS) -lm
 
 OBJECTS=\
 	elpea-directory.o \

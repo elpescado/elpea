@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use uConfigure;
+
+my $conf = new uConfigure;
+
+$conf->check_cmd ("gcc");
+
+$conf->check_pkg ("gtk+-2.0");
+$conf->check_pkg ("gtkglext-1.0");
+$conf->check_pkg ("gthread-2.0");
+$conf->check_pkg ("gconf-2.0");
+
+$conf->check_lib ("m");
+$conf->check_lib ("GL");
+$conf->check_lib ("GLU");
+
+if ($conf->ok ()) {
+	$conf->write_defines ("config.h");
+	$conf->write_makefile_inc ("Makefile.inc");
+}
+
+$conf->print_summary ();
