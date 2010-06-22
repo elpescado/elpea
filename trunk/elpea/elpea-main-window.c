@@ -529,6 +529,7 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	elpea_main_window_init_gui (self);
 	_zoom_changed (NULL, NULL, self);
 
+	/* Apply settings for the first time */
 	elpea_main_window_preferences_notify (prefs, "show_menubar", self);
 	elpea_main_window_preferences_notify (prefs, "show_toolbar", self);
 	elpea_main_window_preferences_notify (prefs, "show_statusbar", self);
