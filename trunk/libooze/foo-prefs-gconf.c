@@ -26,6 +26,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <string.h>
 #include <gtk/gtk.h>
 #include "foo-prefs-gconf.h"
 
@@ -34,6 +35,12 @@
 #define KEY_PATH_MAX 256
 
 G_DEFINE_TYPE (FooPrefsGconf, foo_prefs_gconf, FOO_TYPE_PREFS)
+
+typedef struct {
+	FooPrefsGconf  *self;
+	FooPrefsNotify  handler;
+    gpointer        user_data;
+} FooPrefsGconfWatchCtx;
 
 struct _FooPrefsGconfPrivate
 {
@@ -66,6 +73,15 @@ foo_prefs_gconf_init (FooPrefsGconf *self)
 
 	priv->gconf = gconf_client_get_default ();
 	priv->app_name = "elpea";
+
+	GError *error = NULL;
+	gchar path[KEY_PATH_MAX];
+	snprintf (path, KEY_PATH_MAX, "/apps/%s", priv->app_name);
+	gconf_client_add_dir (priv->gconf, path, GCONF_CLIENT_PRELOAD_NONE, &error);
+	if (error) {
+		g_printerr ("Error: %d: %s\n", error->code, error->message);
+		g_error_free (error);
+	}
 
 	priv->disposed = FALSE;
 }
@@ -187,8 +203,55 @@ foo_prefs_gconf_set_string (FooPrefs    *prefs,
 	}
 }
 
+static void
+foo_prefs_gconf_notification_proxy (GConfClient *client,
+                                    guint cnxn_id,
+                                    GConfEntry *entry,
+                                    gpointer user_data)
+{
+	FooPrefsGconfWatchCtx *ctx = (FooPrefsGconfWatchCtx *) user_data;
+	FooPrefsGconfPrivate *priv = FOO_PREFS_GCONF(ctx->self)->priv;
+	gchar path[KEY_PATH_MAX];
+	gint n = snprintf (path, KEY_PATH_MAX, "/apps/%s/", priv->app_name);
+
+	const gchar *gconf_key = gconf_entry_get_key (entry);
+	if (strncmp (gconf_key, path, n) == 0) {
+		const gchar *key = gconf_key + n;
+		g_print ("Entry '%s' modified\n", key);
+
+		if (ctx->handler) {
+			ctx->handler (FOO_PREFS (ctx->self), key, ctx->user_data);
+		}
+	}
+}
 
 
+static guint
+foo_prefs_gconf_add_watch  (FooPrefs       *prefs,
+                            const gchar    *key,
+                            FooPrefsNotify  handler,
+                            gpointer        user_data)
+{
+	FooPrefsGconfPrivate *priv = FOO_PREFS_GCONF(prefs)->priv;
+	gchar path[KEY_PATH_MAX];
+	snprintf (path, KEY_PATH_MAX, "/apps/%s/%s", priv->app_name, key);
+
+	FooPrefsGconfWatchCtx *ctx = g_new0 (FooPrefsGconfWatchCtx, 1);
+	ctx->self = prefs;
+	ctx->handler = handler;
+	ctx->user_data = user_data;
+
+	GError *error = NULL;
+	guint val = gconf_client_notify_add (priv->gconf, path,
+	                                     foo_prefs_gconf_notification_proxy, ctx,
+	                                     g_free, &error);
+	if (error) {
+		g_printerr ("Error: %d: %s\n", error->code, error->message);
+		g_error_free (error);
+	}
+
+	return val;
+}
 
 
 static void
@@ -262,6 +325,7 @@ foo_prefs_gconf_class_init (FooPrefsGconfClass *klass)
 	pclass->set_int = foo_prefs_gconf_set_int;
 	pclass->set_bool = foo_prefs_gconf_set_bool;
 	pclass->set_string = foo_prefs_gconf_set_string;
+	pclass->add_watch = foo_prefs_gconf_add_watch;
 
 	g_type_class_add_private (klass, sizeof (FooPrefsGconfPrivate));
 }
