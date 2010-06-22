@@ -115,6 +115,17 @@ foo_prefs_set_string (FooPrefs    *prefs,
 }
 
 
+guint
+foo_prefs_add_watch  (FooPrefs       *prefs,
+                      const gchar    *key,
+                      FooPrefsNotify  handler,
+                      gpointer        user_data)
+{
+	g_return_val_if_fail (FOO_IS_PREFS (prefs), 0);
+	return FOO_PREFS_GET_CLASS (prefs)->add_watch (prefs, key, handler, user_data);
+}
+
+
 
 
 static void

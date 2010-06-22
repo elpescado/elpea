@@ -54,6 +54,8 @@ typedef struct _FooPrefs		FooPrefs;
 typedef struct _FooPrefsPrivate		FooPrefsPrivate;
 typedef struct _FooPrefsClass		FooPrefsClass;
 
+typedef void (*FooPrefsNotify) (FooPrefs *, const gchar *, gpointer);
+
 struct _FooPrefs{
 	GObject		parent;
 	FooPrefsPrivate	*priv;
@@ -70,6 +72,8 @@ struct _FooPrefsClass
 	void         (*set_int)    (FooPrefs *, const gchar *, gint);
 	void         (*set_bool)   (FooPrefs *, const gchar *, gboolean);
 	void         (*set_string) (FooPrefs *, const gchar *, const gchar *);
+	guint        (*add_watch)  (FooPrefs *, const gchar *, FooPrefsNotify, gpointer);
+
 
 	/* Signals */
 };
@@ -116,6 +120,11 @@ foo_prefs_set_string (FooPrefs    *prefs,
                       const gchar *value);
 
                     
+guint
+foo_prefs_add_watch  (FooPrefs       *prefs,
+                      const gchar    *key,
+                      FooPrefsNotify  handler,
+                      gpointer        user_data);
 
 
 G_END_DECLS
