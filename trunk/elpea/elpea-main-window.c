@@ -19,6 +19,7 @@
  */
 
 #include <math.h>
+#include <string.h>
 
 #include <gtk/gtk.h>
 
@@ -51,8 +52,8 @@ elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path);
 static void
 elpea_main_window_load_dir (ElpeaMainWindow *self, const gchar *path);
 
-
-
+static void
+elpea_main_window_preferences_notify (FooPrefs *prefs, const gchar *key, gpointer data);
 
 
 
@@ -66,6 +67,10 @@ struct _ElpeaMainWindowPrivate
 	gulong         zoom_changed_handler_id;
 
 	/* Widgets */
+	GtkWidget       *menubar;
+	GtkWidget       *toolbar;
+	GtkWidget       *statusbar;
+	GtkWidget       *sidebar;
 	GtkActionGroup  *action_group;
 	GtkUIManager    *ui;
 	GtkGlImage      *image;
@@ -387,11 +392,13 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	GtkWidget *menubar = gtk_ui_manager_get_widget (priv->ui, "/menubar");
 	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, FALSE, 0);	// FIXME: Warning here
 	gtk_widget_show (menubar);
+	priv->menubar = menubar;
 
 	/* Toolbar placeholder */
 	GtkWidget *toolbar = gtk_ui_manager_get_widget (priv->ui, "/toolbar");
 	gtk_box_pack_start (GTK_BOX (vbox), toolbar, FALSE, FALSE, 0);
 	gtk_widget_show (toolbar);
+	priv->toolbar = toolbar;
 
 	/*
 	 * Image area
@@ -408,6 +415,7 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw1), GTK_SHADOW_IN);
 	gtk_paned_add1 (GTK_PANED (paned), sw1);
 	gtk_widget_show (sw1);
+	priv->sidebar = sw1;
 
 	GtkWidget *thumb_view = elpea_thumbnail_view_new ();
 	gtk_tree_view_set_model (GTK_TREE_VIEW (thumb_view), priv->thumbnail_model);
@@ -448,6 +456,7 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	GtkWidget *status_box = gtk_hbox_new (FALSE, 6);
 	gtk_box_pack_start (GTK_BOX (vbox), status_box, FALSE, FALSE, 0);
 	gtk_widget_show (status_box);
+	priv->statusbar = status_box;
 
 	/* Status part */
 	GtkWidget *main_status = gtk_statusbar_new ();
@@ -493,6 +502,8 @@ static void _row_changed                               (GtkTreeModel *tree_model
 static void
 elpea_main_window_init (ElpeaMainWindow *self)
 {
+	extern FooPrefs *prefs;
+
 	self->priv = ELPEA_MAIN_WINDOW_GET_PRIVATE (self);
 	ElpeaMainWindowPrivate *priv = self->priv;
 
@@ -510,8 +521,18 @@ elpea_main_window_init (ElpeaMainWindow *self)
 	elpea_directory_load (dir, "/home/przemek/pliki/pix");
 	priv->thumbnail_model = dir;
 
+	foo_prefs_add_watch (prefs, "show_menubar", elpea_main_window_preferences_notify, self);
+	foo_prefs_add_watch (prefs, "show_toolbar", elpea_main_window_preferences_notify, self);
+	foo_prefs_add_watch (prefs, "show_statusbar", elpea_main_window_preferences_notify, self);
+	foo_prefs_add_watch (prefs, "show_sidebar", elpea_main_window_preferences_notify, self);
+
 	elpea_main_window_init_gui (self);
 	_zoom_changed (NULL, NULL, self);
+
+	elpea_main_window_preferences_notify (prefs, "show_menubar", self);
+	elpea_main_window_preferences_notify (prefs, "show_toolbar", self);
+	elpea_main_window_preferences_notify (prefs, "show_statusbar", self);
+	elpea_main_window_preferences_notify (prefs, "show_sidebar", self);
 }
 
 
@@ -547,6 +568,33 @@ thumb_view_selection_changed_cb (GtkTreeSelection *selection, ElpeaMainWindow *s
 	}
 
 }
+
+
+static void
+elpea_main_window_preferences_notify (FooPrefs    *prefs,
+                                      const gchar *key,
+                                      gpointer     data)
+{
+	ElpeaMainWindowPrivate *priv = ELPEA_MAIN_WINDOW(data)->priv;
+
+	GtkWidget *widget = NULL;
+	
+	if (strcmp (key, "show_menubar") == 0) {
+		widget = priv->menubar;
+	} else if (strcmp (key, "show_toolbar") == 0) {
+		widget = priv->toolbar;
+	} else if (strcmp (key, "show_statusbar") == 0) {
+		widget = priv->statusbar;
+	} else if (strcmp (key, "show_sidebar") == 0) {
+		widget = priv->sidebar;
+	}
+
+	if (widget) {
+		gtk_widget_set_visible (widget, foo_prefs_get_bool (prefs, key, TRUE));
+	}
+	
+}
+
 
 
 /* 
