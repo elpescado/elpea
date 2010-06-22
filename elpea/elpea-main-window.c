@@ -32,6 +32,8 @@
 
 #include "ooze-cache.h"
 #include "foo-prefs.h"
+#include "baz-prefs.h"
+
 
 #define N_(a) (a)
 #define _(a) (a)
@@ -347,6 +349,8 @@ static const gchar* ui_markup =
 static void
 elpea_main_window_init_actions (ElpeaMainWindow *self)
 {
+	extern FooPrefs *prefs;
+
 	ElpeaMainWindowPrivate *priv = self->priv;
 	GError *error = NULL;
 
@@ -360,6 +364,10 @@ elpea_main_window_init_actions (ElpeaMainWindow *self)
 	gtk_action_set_is_important (_get_action (self, "Prev"), TRUE);
 	gtk_action_set_is_important (_get_action (self, "Next"), TRUE);
 #endif
+	baz_prefs_bind_action (prefs, _get_action(self, "ShowSidebar"), "show_sidebar");
+	baz_prefs_bind_action (prefs, _get_action(self, "ShowMenubar"), "show_menubar");
+	baz_prefs_bind_action (prefs, _get_action(self, "ShowToolbar"), "show_toolbar");
+	baz_prefs_bind_action (prefs, _get_action(self, "ShowStatusbar"), "show_statusbar");
 
 	priv->ui = gtk_ui_manager_new ();
 	gtk_ui_manager_insert_action_group (priv->ui, priv->action_group, 0);
