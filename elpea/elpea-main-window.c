@@ -29,6 +29,7 @@
 #include "elpea-main-window.h"
 #include "elpea-thumbnail-view.h"
 #include "elpea-thumbnail.h"
+#include "elpea-preferences-window.h"
 
 #include "ooze-cache.h"
 #include "foo-prefs.h"
@@ -82,6 +83,8 @@ struct _ElpeaMainWindowPrivate
 	GtkTreeModel    *thumbnail_model;
 
 	OozeCache       *pixbuf_cache;
+
+	GtkWidget       *prefs_window;
 
 	gboolean disposed;
 };
@@ -165,6 +168,24 @@ _action_open (GtkAction *action,
 	}
 
 	gtk_widget_destroy (win);
+}
+
+
+static void
+_action_preferences (GtkAction *action,
+                     gpointer   user_data)
+{
+	ElpeaMainWindow *self = ELPEA_MAIN_WINDOW (user_data);
+	ElpeaMainWindowPrivate *priv = self->priv;
+
+	if (priv->prefs_window == NULL) {
+		extern FooPrefs *prefs;
+		priv->prefs_window = elpea_preferences_window_new (prefs);
+		gtk_window_set_transient_for (GTK_WINDOW (priv->prefs_window), GTK_WINDOW (self));
+		g_signal_connect (priv->prefs_window, "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
+	}
+
+	gtk_widget_show (priv->prefs_window);
 }
 
 
@@ -266,7 +287,7 @@ static const GtkActionEntry actions[] = {
 		{"Open", GTK_STOCK_OPEN, NULL, "<Ctrl>o", N_("Open image"), G_CALLBACK (_action_open)},
 		{"Quit", GTK_STOCK_QUIT, NULL, "<Ctrl>q", N_("Quit"), G_CALLBACK (gtk_main_quit)},
 	{"Edit", NULL, N_("Edit")},
-		{"Preferences", GTK_STOCK_PREFERENCES, NULL, "<Ctrl><Alt>p", N_("Preferences"), G_CALLBACK (dummy_callback)},
+		{"Preferences", GTK_STOCK_PREFERENCES, NULL, "<Ctrl><Alt>p", N_("Preferences"), G_CALLBACK (_action_preferences)},
 	{"View", NULL, N_("View")},
 		{"ZoomIn",     GTK_STOCK_ZOOM_IN, NULL, "plus", N_("Zoom image in"), G_CALLBACK (_action_zoom)},
 		{"ZoomOut",    GTK_STOCK_ZOOM_OUT, NULL, "minus", N_("Zoom image out"), G_CALLBACK (_action_zoom)},
