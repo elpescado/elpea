@@ -418,3 +418,59 @@ sub print_status
 
 
 1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+uConfigure - A simple package configuration framework
+
+=head1 SYNOPSIS
+
+ use uConfigure;
+
+ my $conf = new uConfigure;
+ $conf->check_cmd ("gcc");
+ $conf->check_pkg ("gtk+-2.0");
+ $conf->check_lib ("GL");
+ $conf->check_header ("stdio.h");
+ if ($conf->ok ()) {
+ 	$conf->write_defines ("config.h");
+ 	$conf->write_makefile_inc ("Makefile.inc");
+ }
+ $conf->print_summary ();
+
+
+=head1 DESCRIPTION
+
+uConfigure is a simple configuration framework that can
+be used as autoconf replacement.
+
+=head1 AUTHOR
+
+Przemysław Sitek <el.pescado@gazeta.pl>
+
+=head1 COPYRIGHT AND DISCLAIMER
+
+Copyright (c) 2010 Przemysław Sitek
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
