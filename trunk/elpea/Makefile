@@ -5,6 +5,7 @@ LDFLAGS=-Wall -g $(UC_LDFLAGS) -lm
 OBJECTS=\
 	elpea-directory.o \
 	elpea-main-window.o \
+	elpea-preferences-window.o \
 	elpea-thumbnail-store-mockup.o \
 	elpea-thumbnail-view.o \
 	elpea-thumbnail.o \

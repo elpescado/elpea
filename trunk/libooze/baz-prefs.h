@@ -11,4 +11,10 @@ baz_prefs_bind_action (FooPrefs    *prefs,
 					   const gchar *key);
 
 
+void
+baz_prefs_bind_widget (FooPrefs    *prefs,
+                       GtkWidget   *widget,
+                       const gchar *key);
+
+
 #endif /* __BAZ_PREFS_H__ */
