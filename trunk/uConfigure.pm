@@ -41,6 +41,7 @@ sub new
 		DEFINES => {},        # Hash of defines
 		CFLAGS => "",         # Flags for compiler
 		LDFLAGS => "",        # Flags for linker
+		FEATURES => {},       # List of optional features
 	};
 	bless ($self, $type);
 	return $self;
@@ -188,6 +189,91 @@ sub check_lib
 	$self->print_status ("", $found);
 
 	return $found;
+}
+
+# Features API
+
+#############################################################################
+
+# Add feature
+sub add_feature
+{
+	my $self = shift;
+	my $name = shift;
+	my $desc = shift;
+
+	my %feature = %{$desc};
+	$feature{enabled} = defined($feature{default}) ? $feature{default} : 0;
+
+	$self->{FEATURES}->{$name} = \%feature;
+}
+
+
+sub enable
+{
+	my $self = shift;
+	my $name = shift;
+
+	$self->{FEATURES}->{$name}->{enabled} = 1;
+}
+
+
+sub disable
+{
+	my $self = shift;
+	my $name = shift;
+
+	$self->{FEATURES}->{$name}->{enabled} = 0;
+}
+
+
+sub enabled
+{
+	my $self = shift;
+	my $name = shift;
+
+	return $self->{FEATURES}->{$name}->{enabled};
+}
+
+
+sub parse_options
+{
+	my $self = shift;
+
+	foreach my $opt (@ARGV) {
+		if ($opt =~ /^--enable-([a-z-]+)(?:=yes)?$/) {
+			$self->enable ($1);
+		} elsif ($opt =~ /^--disable-([a-z-]+)$/ || $opt =~ /^--enable-([a-z-]+)=no$/) {
+			$self->disable ($1);
+		} elsif ($opt eq '--help' || $opt eq '-h') {
+			$self->print_help;
+			exit(0);
+		}
+	}
+}
+
+
+sub print_help
+{
+	my $self = shift;
+
+	print "Optional Features:\n";
+	foreach my $name (keys %{$self->{FEATURES}}) {
+		my %feature = %{$self->{FEATURES}->{$name}};
+		my $caption = "  --enable-$name";
+
+		print $caption;
+		if (defined $feature{description}) {
+			print " " x (24 - length($caption));
+			print $feature{description};
+
+			if (defined $feature{default}) {
+				print " [default ", $feature{default} ? "yes" : "no", "]";
+			}
+		}
+
+		print "\n";
+	}
 }
 
 

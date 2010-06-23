@@ -7,6 +7,13 @@ use uConfigure;
 
 my $conf = new uConfigure;
 
+$conf->add_feature ("gconf", {
+		description => "Use gconf configuration backend",
+		default     => 1
+	});
+
+$conf->parse_options ();
+
 $conf->check_cmd ("gcc");
 
 $conf->check_pkg ("gtk+-2.0");
