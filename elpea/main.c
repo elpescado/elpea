@@ -24,6 +24,8 @@ int main (int argc, char *argv[])
 
 	gtk_main ();
 
+	g_object_unref (prefs);
+
 	return EXIT_SUCCESS;
 }
 
