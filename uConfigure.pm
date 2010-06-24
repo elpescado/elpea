@@ -42,7 +42,12 @@ sub new
 		CFLAGS => "",         # Flags for compiler
 		LDFLAGS => "",        # Flags for linker
 		FEATURES => {},       # List of optional features
+		HAS_PKGCONFIG => -1,  # Whether system has pkg-config
 	};
+
+	$self->{CFLAGS} = $ENV{CFLAGS};
+	$self->{LDFLAGS} = $ENV{LDFLAGS};
+
 	bless ($self, $type);
 	return $self;
 }
@@ -88,6 +93,10 @@ sub check_pkg
 	my $package_name = shift;
 	my $required = shift;
 	$required = defined $required ? $required : 1;
+
+	if ($self->{HAS_PKGCONFIG} == -1) {
+		$self->{HAS_PKGCONFIG} = $self->check_cmd ("pkg-config") ? 1 : 0;
+	}
 
 	$self->print_check ($package_name);
 
@@ -175,7 +184,8 @@ sub check_lib
 	close F;
 
 	# compile test file
-	my $cmd = "gcc -Wall -l$lib -L/usr/local/lib -o test test.c $ERR";
+	my $cmd = sprintf ("gcc -Wall -l%s %s -o test test.c %s",
+	                   $lib, $self->{LDFLAGS}, $ERR);
 	my $exit_code = system ($cmd);
 	unlink "test.c";
 	unlink "test" if (-f "test");
