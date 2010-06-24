@@ -19,3 +19,8 @@ void                gtk_adjustment_set_step_increment   (GtkAdjustment *adjustme
 void                gtk_adjustment_set_upper            (GtkAdjustment *adjustment,
                                                          gdouble upper);
 #endif
+
+#if !GTK_CHECK_VERSION(2,18,0)
+void                gtk_widget_set_visible              (GtkWidget *widget,
+                                                         gboolean visible);
+#endif

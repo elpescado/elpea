@@ -5,10 +5,10 @@ LDFLAGS=-Wall -g $(UC_LDFLAGS)
 all: gtk-gl-image-test
 
 marshallers.c: marshallers.list
-	glib-genmarshal --body $< > $@
+	glib-genmarshal --body $+ > $@
 
 marshallers.h: marshallers.list
-	glib-genmarshal --header $< > $@
+	glib-genmarshal --header $+ > $@
 
 marshallers.o: marshallers.c marshallers.h
 

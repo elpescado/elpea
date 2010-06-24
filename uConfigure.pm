@@ -175,7 +175,7 @@ sub check_lib
 	close F;
 
 	# compile test file
-	my $cmd = "gcc -Wall -l$lib -o test test.c $ERR";
+	my $cmd = "gcc -Wall -l$lib -L/usr/local/lib -o test test.c $ERR";
 	my $exit_code = system ($cmd);
 	unlink "test.c";
 	unlink "test" if (-f "test");
