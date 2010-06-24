@@ -79,3 +79,15 @@ void                gtk_adjustment_set_upper            (GtkAdjustment *adjustme
 
 
 #endif
+
+#if !GTK_CHECK_VERSION(2,18,0)
+void                gtk_widget_set_visible              (GtkWidget *widget,
+                                                         gboolean visible)
+{
+	if (visible) {
+		gtk_widget_show (widget);
+	} else {
+		gtk_widget_hide (widget);
+	}
+}
+#endif
