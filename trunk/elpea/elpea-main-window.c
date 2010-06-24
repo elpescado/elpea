@@ -307,10 +307,10 @@ static const guint n_actions = G_N_ELEMENTS (actions);
 
 
 static const GtkToggleActionEntry toggle_actions [] = {
-	{"ShowMenubar", NULL, N_("Show Menubar"), "m", N_("Whether to show menubar"), G_CALLBACK (dummy_callback), TRUE},
-	{"ShowToolbar", NULL, N_("Show Toolbar"), "", N_("Whether to show toolbar"), G_CALLBACK (dummy_callback), TRUE},
-	{"ShowSidebar", NULL, N_("Show Sidebar"), "", N_("Whether to show sidebar"), G_CALLBACK (dummy_callback), TRUE},
-	{"ShowStatusbar", NULL, N_("Show Statusbar"), "", N_("Whether to show statusbar"), G_CALLBACK (dummy_callback), TRUE},
+	{"ShowMenubar", NULL, N_("Show Menubar"), "m", N_("Whether to show menubar"), NULL, TRUE},
+	{"ShowToolbar", NULL, N_("Show Toolbar"), "", N_("Whether to show toolbar"), NULL, TRUE},
+	{"ShowSidebar", NULL, N_("Show Sidebar"), "", N_("Whether to show sidebar"), NULL, TRUE},
+	{"ShowStatusbar", NULL, N_("Show Statusbar"), "", N_("Whether to show statusbar"), NULL, TRUE},
 };
 
 static const guint n_toggle_actions = G_N_ELEMENTS (toggle_actions);
