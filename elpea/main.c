@@ -1,9 +1,17 @@
+#include "../config.h"
+
 #include <stdlib.h>
 
 #include <gtk/gtk.h>
 
 #include "elpea-main-window.h"
-#include "foo-prefs-gconf.h"
+
+#ifdef HAVE_GCONF
+#  include "foo-prefs-gconf.h"
+#else
+#  include "foo-prefs-ini.h"
+#endif
+
 
 FooPrefs *prefs = NULL;
 
@@ -13,7 +21,11 @@ int main (int argc, char *argv[])
 	gtk_init (&argc, &argv);
 	gtk_gl_init (&argc, &argv);
 
+#ifdef HAVE_GCONF
 	prefs = FOO_PREFS (foo_prefs_gconf_new ());
+#else
+	prefs = FOO_PREFS (foo_prefs_ini_new ());
+#endif
 
 	GtkWidget *window = elpea_main_window_new ();
 

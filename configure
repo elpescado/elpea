@@ -19,7 +19,10 @@ $conf->check_cmd ("gcc");
 $conf->check_pkg ("gtk+-2.0");
 $conf->check_pkg ("gtkglext-1.0");
 $conf->check_pkg ("gthread-2.0");
-$conf->check_pkg ("gconf-2.0");
+if ($conf->enabled ("gconf")) {
+	$conf->check_pkg ("gconf-2.0");
+	$conf->define ("HAVE_GCONF");
+}
 
 $conf->check_lib ("m");
 $conf->check_lib ("GL");
