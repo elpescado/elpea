@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# uConfigure 1.0
+# uConfigure 1.1
 # (c) Przemysław Sitek
 # Simple configuration tool
 
@@ -209,6 +209,7 @@ sub add_feature
 }
 
 
+# Enable feature
 sub enable
 {
 	my $self = shift;
@@ -218,6 +219,7 @@ sub enable
 }
 
 
+# Disable feature
 sub disable
 {
 	my $self = shift;
@@ -227,6 +229,7 @@ sub disable
 }
 
 
+# Check whether a feature has been enabled
 sub enabled
 {
 	my $self = shift;
@@ -446,7 +449,25 @@ uConfigure - A simple package configuration framework
 =head1 DESCRIPTION
 
 uConfigure is a simple configuration framework that can
-be used as autoconf replacement.
+be used as autoconf replacement. It is designed to be:
+
+=over
+
+=item fast
+
+=item written in mainstream language
+
+=item user friendly
+
+=back
+
+=head2 Checks
+
+=head2 Optional features
+
+=head2 Script status
+
+=head2 Miscallenous
 
 =head1 AUTHOR
 
