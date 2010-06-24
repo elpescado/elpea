@@ -1,6 +1,6 @@
 include ../Makefile.inc
 CFLAGS=-Wall -g $(UC_CFLAGS) -I../gtkglimage -I../libooze
-LDFLAGS=-Wall -g $(UC_LDFLAGS) -lm
+LDFLAGS=-Wall -g `pkg-config --libs gtkglext-1.0 gtk+-2.0 gconf-2.0 gthread-2.0`
 
 OBJECTS=\
 	elpea-directory.o \
@@ -19,4 +19,4 @@ OBJECTS=\
 all: elpea
 
 elpea: $(OBJECTS)
-	$(CC) -o $@ $(LDFLAGS) $(OBJECTS) 
+	$(CC) -o $@ $(LDFLAGS)   $(OBJECTS) 
