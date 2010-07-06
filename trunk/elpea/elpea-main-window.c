@@ -58,6 +58,9 @@ elpea_main_window_load_dir (ElpeaMainWindow *self, const gchar *path);
 static void
 elpea_main_window_preferences_notify (FooPrefs *prefs, const gchar *key, gpointer data);
 
+static void
+elpea_main_window_update_open_with_menu (ElpeaMainWindow *self,
+                                         const gchar     *file_name);
 
 
 
@@ -79,6 +82,7 @@ struct _ElpeaMainWindowPrivate
 	GtkGlImage      *image;
 	GtkWidget       *zoom_statusbar;
 	GtkWidget       *thumb_view;
+	GtkWidget       *open_with_menu_item;
 
 	GtkTreeModel    *thumbnail_model;
 
@@ -285,6 +289,7 @@ _get_action (ElpeaMainWindow *self, const gchar *name)
 static const GtkActionEntry actions[] = {
 	{"File", NULL, N_("File")},
 		{"Open", GTK_STOCK_OPEN, NULL, "<Ctrl>o", N_("Open image"), G_CALLBACK (_action_open)},
+		{"OpenWith", NULL, N_("Open With"), NULL, N_("Open using external application"), NULL},
 		{"Quit", GTK_STOCK_QUIT, NULL, "<Ctrl>q", N_("Quit"), G_CALLBACK (gtk_main_quit)},
 	{"Edit", NULL, N_("Edit")},
 		{"Preferences", GTK_STOCK_PREFERENCES, NULL, "<Ctrl><Alt>p", N_("Preferences"), G_CALLBACK (_action_preferences)},
@@ -322,6 +327,9 @@ static const gchar* ui_markup =
 	"<menubar>"
 		"<menu action='File'>"
 			"<menuitem action='Open' />"
+			"<menu action='OpenWith'>"
+				"<menuitem action='Quit'/>"
+			"</menu>"
 			"<separator/>"
 			"<menuitem action='Quit' />"
 		"</menu>"
@@ -428,6 +436,9 @@ elpea_main_window_init_gui (ElpeaMainWindow *self)
 	gtk_box_pack_start (GTK_BOX (vbox), toolbar, FALSE, FALSE, 0);
 	gtk_widget_show (toolbar);
 	priv->toolbar = toolbar;
+
+	GtkWidget *open_with_menu_item = gtk_ui_manager_get_widget (priv->ui, "/menubar/File/OpenWith");
+	priv->open_with_menu_item = open_with_menu_item;
 
 	/*
 	 * Image area
@@ -640,6 +651,8 @@ elpea_main_window_load_file (ElpeaMainWindow *self, const gchar *path)
 	gtk_gl_image_set_from_pixbuf (GTK_GL_IMAGE (priv->image), pix);
 	g_object_unref (pix);
 	//gtk_gl_image_set_from_file (GTK_GL_IMAGE (priv->image), path);
+
+	elpea_main_window_update_open_with_menu (self, path);
 }
 
 
@@ -653,6 +666,74 @@ elpea_main_window_load_dir (ElpeaMainWindow *self,
 	elpea_directory_load (dir, path);
 	priv->thumbnail_model = GTK_TREE_MODEL (dir);
 	gtk_tree_view_set_model (GTK_TREE_VIEW (priv->thumb_view), priv->thumbnail_model);
+}
+
+
+/*
+ * Open with...
+ */
+
+static void
+elpea_main_window_open_with_activated (GtkMenuItem *menuitem,
+                                       gpointer     user_data)
+{
+	GAppInfo *app_info     = g_object_get_data (G_OBJECT (menuitem), "AppInfo");
+	GFile *file = g_object_get_data (G_OBJECT (menuitem), "File");
+
+	g_return_if_fail (app_info != NULL);
+	g_return_if_fail (file != NULL);
+
+	GList list = {NULL};
+	list.data = file;
+
+	g_app_info_launch (app_info, &list, NULL, NULL);
+}
+
+
+static void
+elpea_main_window_update_open_with_menu (ElpeaMainWindow *self,
+                                         const gchar     *file_name)
+{
+	ElpeaMainWindowPrivate *priv = self->priv;
+
+	g_print ("elpea_main_window_update_open_with_menu ('%s')\n", file_name);
+	GFile *file = g_file_new_for_path (file_name);
+	GFileInfo *info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
+	                                     G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	const gchar* content_type = g_file_info_get_content_type (info);
+	g_print ("Content type = '%s'\n", content_type);
+
+	GtkWidget *menu = gtk_menu_new ();
+
+	GList *app_infos = g_app_info_get_all_for_type (content_type);
+	for (GList *node = app_infos; node; node = node->next) {
+		GAppInfo *app_info = (GAppInfo *)node->data;
+
+#if GLIB_CHECK_VERSION (2, 24, 0)
+		const gchar *app_name = g_app_info_get_display_name (app_info);
+#else
+		const gchar *app_name = g_app_info_get_name (app_info);
+#endif
+
+		GtkWidget *menu_item = gtk_image_menu_item_new_with_label (app_name);
+		g_object_set_data_full (G_OBJECT (menu_item), "AppInfo", app_info, g_object_unref);
+		g_object_set_data_full (G_OBJECT (menu_item), "File", g_object_ref (file), g_object_unref);
+		g_signal_connect (menu_item, "activate", G_CALLBACK (elpea_main_window_open_with_activated), self);
+		GtkWidget *icon = gtk_image_new_from_gicon (g_app_info_get_icon (app_info), GTK_ICON_SIZE_MENU);
+		gtk_widget_show (icon);
+		gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_item), icon);
+#if GTK_CHECK_VERSION (2, 16, 0)
+		gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (menu_item), TRUE);
+#endif
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
+		gtk_widget_show (menu_item);
+	}
+
+	gtk_widget_show (menu);
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (priv->open_with_menu_item), GTK_MENU (menu));
+
+	g_object_unref (info);
+	g_object_unref (file);
 }
 
 

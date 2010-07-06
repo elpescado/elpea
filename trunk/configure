@@ -23,6 +23,7 @@ if ($conf->enabled ("gconf")) {
 	$conf->check_pkg ("gconf-2.0");
 	$conf->define ("HAVE_GCONF");
 }
+$conf->check_pkg ("gio-2.0");
 
 $conf->check_lib ("m");
 $conf->check_lib ("GL");
