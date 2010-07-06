@@ -1,5 +1,5 @@
 include ../Makefile.inc
-CFLAGS=-Wall -g $(UC_CFLAGS) -I../gtkglimage -I../libooze
+CFLAGS=-Wall -std=c99 -g $(UC_CFLAGS) -I../gtkglimage -I../libooze
 LDFLAGS=-Wall -g `pkg-config --libs gtkglext-1.0 gtk+-2.0 gconf-2.0 gthread-2.0`
 
 OBJECTS=\
