@@ -281,6 +281,14 @@ render_background (GtkGlImage *self)
 }
 
 
+static void swap2f (GLfloat *x, GLfloat *y)
+{
+	GLfloat tmp = *x;
+	*x = *y;
+	*y = tmp;
+}
+
+
 static void
 render (GtkGlImage *self)
 {
@@ -306,6 +314,13 @@ render (GtkGlImage *self)
 	GLfloat ph = gdk_pixbuf_get_height (priv->pixbuf); // picture height
 	GLfloat sw = widget->allocation.width;             // viewport width
 	GLfloat sh = widget->allocation.height;            // viewport height
+
+	/* For calculation only */
+	GLfloat ppw = pw;
+	GLfloat pph = ph;
+	if ((priv->rotation / 90) % 2) {
+		swap2f (&ppw, &pph);
+	}
 
 	GLfloat z = priv->zoom;
 	GLfloat a = sw/sh;
@@ -785,6 +800,11 @@ update_adjustments (GtkGlImage *self)
 
 	g_object_freeze_notify (G_OBJECT (priv->hadjustment));
 	g_object_freeze_notify (G_OBJECT (priv->vadjustment));
+
+	if ((priv->rotation / 90) % 2) {
+		swap2f (&cw, &ch);
+	}
+
 
 
 	gtk_adjustment_set_lower (priv->hadjustment, 0.0);
